@@ -1,0 +1,243 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Modèle utilisateur pour l'authentification
+model User {
+  id             String    @id @default(uuid())
+  username       String    @unique
+  email          String    @unique
+  hashedPassword String
+  avatar         String?
+  bio            String?
+  role           UserRole  @default(USER)
+  active         Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  lastLoginAt    DateTime?
+
+  // Relations
+  teams              TeamMember[]
+  ownedTeams         Team[]                @relation("TeamOwner")
+  assignedChallenges ChallengeAssignment[]
+  messages           Message[]
+  notes              Note[]
+  uploads            Upload[]
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+// Modèle pour les équipes CTF
+model Team {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  avatar      String?
+  inviteCode  String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  ownerId     String
+
+  // Relations
+  owner      User         @relation("TeamOwner", fields: [ownerId], references: [id])
+  members    TeamMember[]
+  events     EventTeam[]
+  challenges Challenge[]
+  messages   Message[]    @relation("TeamMessages")
+  uploads    Upload[]     @relation("TeamUploads")
+}
+
+// Relation entre utilisateurs et équipes
+model TeamMember {
+  id       String   @id @default(uuid())
+  userId   String
+  teamId   String
+  role     TeamRole @default(MEMBER)
+  joinedAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, teamId])
+}
+
+enum TeamRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+// Modèle pour les événements CTF
+model Event {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  website     String?
+  ctfdUrl     String?
+  ctfdApiKey  String?
+  logoUrl     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  teams      EventTeam[]
+  challenges Challenge[] @relation("EventChallenges")
+}
+
+// Relation entre événements et équipes
+model EventTeam {
+  id       String   @id @default(uuid())
+  eventId  String
+  teamId   String
+  joinedAt DateTime @default(now())
+
+  // Relations
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  team  Team  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, teamId])
+}
+
+// Modèle pour les challenges CTF
+model Challenge {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  category    String?
+  points      Int?
+  flag        String?
+  solved      Boolean   @default(false)
+  solvedAt    DateTime?
+  externalId  String?
+  eventId     String?
+  teamId      String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  event       Event?                @relation("EventChallenges", fields: [eventId], references: [id], onDelete: SetNull)
+  team        Team                  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  assignments ChallengeAssignment[]
+  notes       Note[]                @relation("ChallengeNotes")
+  messages    Message[]             @relation("ChallengeMessages")
+  uploads     Upload[]              @relation("ChallengeUploads")
+
+  @@unique([externalId, eventId, teamId])
+  @@unique([name, teamId])
+}
+
+// Assignation des utilisateurs aux challenges
+model ChallengeAssignment {
+  id          String   @id @default(uuid())
+  challengeId String
+  userId      String
+  assignedAt  DateTime @default(now())
+
+  // Relations
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([challengeId, userId])
+}
+
+// Notes pour les challenges
+model Note {
+  id          String   @id @default(uuid())
+  content     String
+  challengeId String
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  challenge Challenge @relation("ChallengeNotes", fields: [challengeId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Messages de chat
+model Message {
+  id          String      @id @default(uuid())
+  content     String
+  userId      String
+  teamId      String?
+  challengeId String?
+  type        MessageType @default(TEAM)
+  createdAt   DateTime    @default(now())
+
+  // Relations
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team      Team?      @relation("TeamMessages", fields: [teamId], references: [id], onDelete: SetNull)
+  challenge Challenge? @relation("ChallengeMessages", fields: [challengeId], references: [id], onDelete: SetNull)
+}
+
+enum MessageType {
+  TEAM
+  CHALLENGE
+  SYSTEM
+}
+
+// Fichiers uploadés
+model Upload {
+  id          String   @id @default(uuid())
+  filename    String
+  path        String
+  size        Int
+  mimeType    String
+  userId      String
+  teamId      String?
+  challengeId String?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team      Team?      @relation("TeamUploads", fields: [teamId], references: [id], onDelete: SetNull)
+  challenge Challenge? @relation("ChallengeUploads", fields: [challengeId], references: [id], onDelete: SetNull)
+}
+
+// Endpoints pour les request catchers et reverse shells
+model Endpoint {
+  id        String       @id @default(uuid())
+  name      String
+  type      EndpointType
+  token     String       @unique
+  teamId    String
+  createdAt DateTime     @default(now())
+  expiresAt DateTime?
+
+  // Relations
+  requests Request[]
+}
+
+enum EndpointType {
+  REQUEST_CATCHER
+  REVERSE_SHELL
+}
+
+// Requêtes capturées
+model Request {
+  id         String   @id @default(uuid())
+  method     String
+  url        String
+  headers    Json
+  body       String?
+  ip         String?
+  endpointId String
+  createdAt  DateTime @default(now())
+
+  // Relations
+  endpoint Endpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+}

@@ -1,0 +1,21 @@
+FROM oven/bun:1.0-alpine
+
+WORKDIR /app
+
+# Installation des dépendances de base
+RUN apk add --no-cache bash curl
+
+# Copie des fichiers de dépendances
+COPY package.json bun.lockb* ./
+
+# Installation des dépendances
+RUN bun install
+
+# Copie du reste du code source
+COPY . .
+
+# Exposition du port
+EXPOSE 3000
+
+# Commande pour démarrer l'application en mode développement avec hot reload
+CMD ["bun", "--hot", "index.ts"]

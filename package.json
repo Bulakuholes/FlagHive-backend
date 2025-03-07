@@ -1,0 +1,40 @@
+{
+  "name": "flaghive_back",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/cookie-parser": "^1.4.8",
+    "@types/express": "^4.17.21",
+    "prettier": "^3.5.3",
+    "prisma": "^5.10.2"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.10.2",
+    "cookie-parser": "^1.4.7",
+    "csrf-csrf": "^3.1.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "jose": "^6.0.8",
+    "zod": "^3.24.2"
+  },
+  "scripts": {
+    "dev": "bun --hot index.ts",
+    "build": "bun build index.ts --outdir ./dist",
+    "start": "bun dist/index.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "prettier --write .",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down"
+  }
+}

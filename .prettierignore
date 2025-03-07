@@ -1,0 +1,30 @@
+# Dossiers générés
+node_modules
+dist
+build
+.next
+.vercel
+.cache
+coverage
+
+# Fichiers générés
+package-lock.json
+yarn.lock
+bun.lockb
+pnpm-lock.yaml
+.DS_Store
+
+# Prisma
+prisma/migrations
+
+# Environnement
+.env
+.env.*
+!.env.example
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

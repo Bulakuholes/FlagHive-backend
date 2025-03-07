@@ -1,0 +1,67 @@
+version: "3.8"
+
+services:
+  # Service pour l'API Node.js avec Bun
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: flaghive_api
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      - CSRF_SECRET=${CSRF_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+      - CSRF_COOKIE_NAME=${CSRF_COOKIE_NAME}
+      - CSRF_TOKEN_SIZE=${CSRF_TOKEN_SIZE}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+    depends_on:
+      - db
+    restart: unless-stopped
+    networks:
+      - flaghive_network
+
+  # Base de données PostgreSQL
+  db:
+    image: postgres:15-alpine
+    container_name: flaghive_db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - flaghive_network
+
+  # Interface d'administration pour PostgreSQL
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: flaghive_pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
+    depends_on:
+      - db
+    restart: unless-stopped
+    networks:
+      - flaghive_network
+
+volumes:
+  postgres_data:
+
+networks:
+  flaghive_network:
+    driver: bridge

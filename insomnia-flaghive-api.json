@@ -1,0 +1,426 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2025-03-08T00:24:08.000Z",
+  "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    {
+      "_id": "req_root",
+      "parentId": "wrk_flaghive",
+      "modified": 1709939048000,
+      "created": 1709939048000,
+      "url": "{{ _.base_url }}",
+      "name": "API Root",
+      "description": "Vérifier que l'API est en ligne",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1709939048000,
+      "_type": "request"
+    },
+    {
+      "_id": "wrk_flaghive",
+      "parentId": null,
+      "modified": 1709939048000,
+      "created": 1709939048000,
+      "name": "FlagHive API",
+      "description": "API pour l'application FlagHive",
+      "scope": "collection",
+      "_type": "workspace"
+    },
+    {
+      "_id": "req_csrf_token",
+      "parentId": "fld_csrf",
+      "modified": 1709939048000,
+      "created": 1709939048000,
+      "url": "{{ _.base_url }}/api/csrf/token",
+      "name": "Obtenir un token CSRF",
+      "description": "Récupère un token CSRF pour les requêtes protégées",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1709939048000,
+      "_type": "request"
+    },
+    {
+      "_id": "fld_csrf",
+      "parentId": "wrk_flaghive",
+      "modified": 1709939048000,
+      "created": 1709939048000,
+      "name": "CSRF",
+      "description": "Endpoints pour la gestion CSRF",
+      "environment": {},
+      "metaSortKey": -1709939048000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_register",
+      "parentId": "fld_auth",
+      "modified": 1709939048000,
+      "created": 1709939048000,
+      "url": "{{ _.base_url }}/api/auth/register",
+      "name": "Inscription",
+      "description": "Créer un nouveau compte utilisateur",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"username\": \"testuser\",\n\t\"email\": \"test@example.com\",\n\t\"password\": \"Password123!\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1709939048000,
+      "_type": "request"
+    },
+    {
+      "_id": "fld_auth",
+      "parentId": "wrk_flaghive",
+      "modified": 1709939048000,
+      "created": 1709939048000,
+      "name": "Authentification",
+      "description": "Endpoints pour l'authentification",
+      "environment": {},
+      "metaSortKey": -1709939047900,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_login",
+      "parentId": "fld_auth",
+      "modified": 1709939048000,
+      "created": 1709939048000,
+      "url": "{{ _.base_url }}/api/auth/login",
+      "name": "Connexion",
+      "description": "Se connecter avec un compte existant",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"username\": \"testuser\",\n\t\"password\": \"Password123!\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1709939047900,
+      "_type": "request"
+    },
+    {
+      "_id": "req_me",
+      "parentId": "fld_auth",
+      "modified": 1709939048000,
+      "created": 1709939048000,
+      "url": "{{ _.base_url }}/api/auth/me",
+      "name": "Profil",
+      "description": "Obtenir les informations de l'utilisateur connecté",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.auth_token }}"
+      },
+      "metaSortKey": -1709939047800,
+      "_type": "request"
+    },
+    {
+      "_id": "req_create_team",
+      "parentId": "fld_teams",
+      "modified": 1709939048000,
+      "created": 1709939048000,
+      "url": "{{ _.base_url }}/api/teams",
+      "name": "Créer une équipe",
+      "description": "Créer une nouvelle équipe",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"name\": \"Mon Équipe\",\n\t\"description\": \"Description de mon équipe\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.auth_token }}"
+      },
+      "metaSortKey": -1709939048000,
+      "_type": "request"
+    },
+    {
+      "_id": "fld_teams",
+      "parentId": "wrk_flaghive",
+      "modified": 1709939048000,
+      "created": 1709939048000,
+      "name": "Équipes",
+      "description": "Endpoints pour la gestion des équipes",
+      "environment": {},
+      "metaSortKey": -1709939047800,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_get_teams",
+      "parentId": "fld_teams",
+      "modified": 1709939048000,
+      "created": 1709939048000,
+      "url": "{{ _.base_url }}/api/teams",
+      "name": "Liste des équipes",
+      "description": "Obtenir la liste des équipes de l'utilisateur",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.auth_token }}"
+      },
+      "metaSortKey": -1709939047900,
+      "_type": "request"
+    },
+    {
+      "_id": "req_get_team",
+      "parentId": "fld_teams",
+      "modified": 1709939048000,
+      "created": 1709939048000,
+      "url": "{{ _.base_url }}/api/teams/{{ _.team_id }}",
+      "name": "Détails d'une équipe",
+      "description": "Obtenir les détails d'une équipe spécifique",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.auth_token }}"
+      },
+      "metaSortKey": -1709939047800,
+      "_type": "request"
+    },
+    {
+      "_id": "req_join_team",
+      "parentId": "fld_teams",
+      "modified": 1709939048000,
+      "created": 1709939048000,
+      "url": "{{ _.base_url }}/api/teams/join",
+      "name": "Rejoindre une équipe",
+      "description": "Rejoindre une équipe avec un code d'invitation",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"inviteCode\": \"code_invitation\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.auth_token }}"
+      },
+      "metaSortKey": -1709939047700,
+      "_type": "request"
+    },
+    {
+      "_id": "req_create_challenge",
+      "parentId": "fld_challenges",
+      "modified": 1709939048000,
+      "created": 1709939048000,
+      "url": "{{ _.base_url }}/api/challenges",
+      "name": "Créer un challenge",
+      "description": "Créer un nouveau challenge pour une équipe",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"name\": \"Challenge Web\",\n\t\"description\": \"Un challenge de sécurité web\",\n\t\"category\": \"web\",\n\t\"difficulty\": \"MEDIUM\",\n\t\"points\": 100,\n\t\"teamId\": \"{{ _.team_id }}\",\n\t\"flag\": \"flag{test_flag}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.auth_token }}"
+      },
+      "metaSortKey": -1709939048000,
+      "_type": "request"
+    },
+    {
+      "_id": "fld_challenges",
+      "parentId": "wrk_flaghive",
+      "modified": 1709939048000,
+      "created": 1709939048000,
+      "name": "Challenges",
+      "description": "Endpoints pour la gestion des challenges",
+      "environment": {},
+      "metaSortKey": -1709939047700,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_get_team_challenges",
+      "parentId": "fld_challenges",
+      "modified": 1709939048000,
+      "created": 1709939048000,
+      "url": "{{ _.base_url }}/api/challenges/team/{{ _.team_id }}",
+      "name": "Challenges d'une équipe",
+      "description": "Obtenir la liste des challenges d'une équipe",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.auth_token }}"
+      },
+      "metaSortKey": -1709939047900,
+      "_type": "request"
+    },
+    {
+      "_id": "req_get_challenge",
+      "parentId": "fld_challenges",
+      "modified": 1709939048000,
+      "created": 1709939048000,
+      "url": "{{ _.base_url }}/api/challenges/{{ _.challenge_id }}",
+      "name": "Détails d'un challenge",
+      "description": "Obtenir les détails d'un challenge spécifique",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.auth_token }}"
+      },
+      "metaSortKey": -1709939047800,
+      "_type": "request"
+    },
+    {
+      "_id": "req_solve_challenge",
+      "parentId": "fld_challenges",
+      "modified": 1709939048000,
+      "created": 1709939048000,
+      "url": "{{ _.base_url }}/api/challenges/{{ _.challenge_id }}/solve",
+      "name": "Résoudre un challenge",
+      "description": "Soumettre un flag pour résoudre un challenge",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"flag\": \"flag{test_flag}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.auth_token }}"
+      },
+      "metaSortKey": -1709939047700,
+      "_type": "request"
+    },
+    {
+      "_id": "req_add_note",
+      "parentId": "fld_challenges",
+      "modified": 1709939048000,
+      "created": 1709939048000,
+      "url": "{{ _.base_url }}/api/challenges/{{ _.challenge_id }}/notes",
+      "name": "Ajouter une note",
+      "description": "Ajouter une note à un challenge",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"content\": \"Voici une note pour ce challenge\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.auth_token }}"
+      },
+      "metaSortKey": -1709939047600,
+      "_type": "request"
+    },
+    {
+      "_id": "env",
+      "parentId": "wrk_flaghive",
+      "modified": 1709939048000,
+      "created": 1709939048000,
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:3001",
+        "auth_token": "",
+        "team_id": "",
+        "challenge_id": ""
+      },
+      "dataPropertyOrder": {
+        "&": ["base_url", "auth_token", "team_id", "challenge_id"]
+      },
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1709939048000,
+      "_type": "environment"
+    },
+    {
+      "_id": "env_dev",
+      "parentId": "env",
+      "modified": 1709939048000,
+      "created": 1709939048000,
+      "name": "Développement",
+      "data": {
+        "base_url": "http://localhost:3001"
+      },
+      "dataPropertyOrder": {
+        "&": ["base_url"]
+      },
+      "color": "#7d69cb",
+      "isPrivate": false,
+      "metaSortKey": 1709939048000,
+      "_type": "environment"
+    },
+    {
+      "_id": "env_prod",
+      "parentId": "env",
+      "modified": 1709939048000,
+      "created": 1709939048000,
+      "name": "Production",
+      "data": {
+        "base_url": "https://api.flaghive.com"
+      },
+      "dataPropertyOrder": {
+        "&": ["base_url"]
+      },
+      "color": "#00c853",
+      "isPrivate": false,
+      "metaSortKey": 1709939047900,
+      "_type": "environment"
+    }
+  ]
+}
