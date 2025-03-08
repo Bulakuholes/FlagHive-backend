@@ -9,9 +9,32 @@ export const createChallenge = async (
   category: string | undefined,
   points: string | undefined,
   teamId: string,
-  eventId: string | undefined,
+  eventId: string,
   userId: string
 ) => {
+  // Vérifier si l'événement existe
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+  });
+
+  if (!event) {
+    throw new Error("Événement non trouvé");
+  }
+
+  // Vérifier si l'équipe est associée à l'événement
+  const eventTeam = await prisma.eventTeam.findUnique({
+    where: {
+      eventId_teamId: {
+        eventId,
+        teamId,
+      },
+    },
+  });
+
+  if (!eventTeam) {
+    throw new Error("Cette équipe n'est pas associée à cet événement");
+  }
+
   // Vérifier si l'utilisateur est membre de l'équipe
   const teamMember = await prisma.teamMember.findUnique({
     where: {
@@ -26,18 +49,21 @@ export const createChallenge = async (
     throw new Error("Vous n'êtes pas membre de cette équipe");
   }
 
-  // Vérifier si un challenge avec ce nom existe déjà dans l'équipe
+  // Vérifier si un challenge avec ce nom existe déjà pour cet événement et cette équipe
   const existingChallenge = await prisma.challenge.findUnique({
     where: {
-      name_teamId: {
+      name_teamId_eventId: {
         name,
         teamId,
+        eventId,
       },
     },
   });
 
   if (existingChallenge) {
-    throw new Error("Un challenge avec ce nom existe déjà dans cette équipe");
+    throw new Error(
+      "Un challenge avec ce nom existe déjà pour cet événement et cette équipe"
+    );
   }
 
   // Créer le challenge
@@ -64,26 +90,47 @@ export const createChallenge = async (
 };
 
 /**
- * Récupère tous les challenges d'une équipe
+ * Récupère tous les challenges d'un événement pour un utilisateur
  */
-export const getChallengesByTeamId = async (teamId: string, userId: string) => {
-  // Vérifier si l'utilisateur est membre de l'équipe
-  const teamMember = await prisma.teamMember.findUnique({
+export const getChallengesByEventId = async (
+  eventId: string,
+  userId: string
+) => {
+  // Vérifier si l'événement existe
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+  });
+
+  if (!event) {
+    throw new Error("Événement non trouvé");
+  }
+
+  // Récupérer les équipes de l'utilisateur
+  const userTeams = await prisma.teamMember.findMany({
+    where: { userId },
+    select: { teamId: true },
+  });
+
+  const teamIds = userTeams.map((team) => team.teamId);
+
+  // Vérifier si l'utilisateur a accès à cet événement via une de ses équipes
+  const eventTeams = await prisma.eventTeam.findMany({
     where: {
-      userId_teamId: {
-        userId,
-        teamId,
-      },
+      eventId,
+      teamId: { in: teamIds },
     },
   });
 
-  if (!teamMember) {
-    throw new Error("Vous n'êtes pas membre de cette équipe");
+  if (eventTeams.length === 0) {
+    throw new Error("Non autorisé à accéder aux challenges de cet événement");
   }
 
-  // Récupérer tous les challenges de l'équipe
+  // Récupérer tous les challenges de l'événement pour les équipes de l'utilisateur
   return await prisma.challenge.findMany({
-    where: { teamId },
+    where: {
+      eventId,
+      teamId: { in: teamIds },
+    },
     include: {
       assignments: {
         include: {
@@ -185,6 +232,7 @@ export const getChallengeById = async (challengeId: string, userId: string) => {
  */
 export const assignUserToChallenge = async (
   challengeId: string,
+  targetUserId: string,
   userId: string
 ) => {
   // Récupérer le challenge
@@ -196,8 +244,33 @@ export const assignUserToChallenge = async (
     throw new Error("Challenge non trouvé");
   }
 
-  // Vérifier si l'utilisateur est membre de l'équipe du challenge
-  const teamMember = await prisma.teamMember.findUnique({
+  // Vérifier si l'utilisateur cible existe
+  const targetUser = await prisma.user.findUnique({
+    where: { id: targetUserId },
+  });
+
+  if (!targetUser) {
+    throw new Error("Utilisateur non trouvé");
+  }
+
+  // Vérifier si l'utilisateur cible est membre de l'équipe du challenge
+  const targetTeamMember = await prisma.teamMember.findUnique({
+    where: {
+      userId_teamId: {
+        userId: targetUserId,
+        teamId: challenge.teamId,
+      },
+    },
+  });
+
+  if (!targetTeamMember) {
+    throw new Error(
+      "L'utilisateur cible n'est pas membre de l'équipe du challenge"
+    );
+  }
+
+  // Vérifier si l'utilisateur qui fait la demande est membre de l'équipe du challenge
+  const userTeamMember = await prisma.teamMember.findUnique({
     where: {
       userId_teamId: {
         userId,
@@ -206,29 +279,29 @@ export const assignUserToChallenge = async (
     },
   });
 
-  if (!teamMember) {
-    throw new Error("Vous n'avez pas accès à ce challenge");
+  if (!userTeamMember) {
+    throw new Error("Non autorisé à assigner un utilisateur à ce challenge");
   }
 
-  // Vérifier si l'utilisateur est déjà assigné au challenge
+  // Vérifier si l'utilisateur cible est déjà assigné au challenge
   const existingAssignment = await prisma.challengeAssignment.findUnique({
     where: {
       challengeId_userId: {
         challengeId,
-        userId,
+        userId: targetUserId,
       },
     },
   });
 
   if (existingAssignment) {
-    throw new Error("Vous êtes déjà assigné à ce challenge");
+    throw new Error("Cet utilisateur est déjà assigné à ce challenge");
   }
 
   // Assigner l'utilisateur au challenge
   return await prisma.challengeAssignment.create({
     data: {
       challengeId,
-      userId,
+      userId: targetUserId,
     },
   });
 };
@@ -264,17 +337,24 @@ export const solveChallenge = async (
     throw new Error("Vous n'avez pas accès à ce challenge");
   }
 
-  // Si le challenge a un flag défini, vérifier qu'il correspond
-  if (challenge.flag && challenge.flag !== flag) {
-    throw new Error("Flag incorrect");
+  // Vérifier si le challenge est déjà résolu
+  if (challenge.solved) {
+    throw new Error("Ce challenge est déjà résolu");
   }
 
-  // Marquer le challenge comme résolu
-  return await prisma.challenge.update({
-    where: { id: challengeId },
-    data: {
-      solved: true,
-      solvedAt: new Date(),
-    },
-  });
+  // Vérifier si le flag est correct
+  if (challenge.flag && challenge.flag === flag) {
+    // Mettre à jour le challenge comme résolu
+    await prisma.challenge.update({
+      where: { id: challengeId },
+      data: {
+        solved: true,
+        solvedAt: new Date(),
+      },
+    });
+
+    return { solved: true };
+  }
+
+  return { solved: false };
 };

@@ -1,9 +1,8 @@
 import type { Express } from "express";
 import { Router } from "express";
 import authRoutes from "./auth";
-import challengesRoutes from "./challenges";
 import csrfRoutes from "./csrf";
-import notesRoutes from "./notes";
+import eventsRoutes from "./events";
 import teamsRoutes from "./teams";
 
 /**
@@ -41,8 +40,7 @@ export const register = (app: Express): void => {
   // Monter les sous-routes
   router.use("/auth", authRoutes);
   router.use("/teams", teamsRoutes);
-  router.use("/challenges", challengesRoutes);
-  router.use("/notes", notesRoutes);
+  router.use("/events", eventsRoutes);
   router.use("/csrf", csrfRoutes);
 
   // Monter toutes les routes API v1 sous /api/v1

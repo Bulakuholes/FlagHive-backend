@@ -151,3 +151,62 @@ export const joinTeamWithInviteCode = async (
 
   return team;
 };
+
+/**
+ * Crée une nouvelle équipe et l'associe à un événement
+ */
+export const createTeamForEvent = async (
+  name: string,
+  description: string | undefined,
+  avatar: string | undefined,
+  userId: string,
+  eventId: string
+) => {
+  // Vérifier si l'événement existe
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+  });
+
+  if (!event) {
+    throw new Error("Événement non trouvé");
+  }
+
+  // Vérification si une équipe avec ce nom existe déjà
+  const existingTeam = await prisma.team.findUnique({
+    where: { name },
+  });
+
+  if (existingTeam) {
+    throw new Error("Une équipe avec ce nom existe déjà");
+  }
+
+  // Création de l'équipe avec l'utilisateur comme propriétaire
+  const team = await prisma.team.create({
+    data: {
+      name,
+      description,
+      avatar,
+      inviteCode: generateInviteCode(),
+      ownerId: userId,
+    },
+  });
+
+  // Ajouter l'utilisateur comme membre de l'équipe avec le rôle OWNER
+  await prisma.teamMember.create({
+    data: {
+      userId,
+      teamId: team.id,
+      role: "OWNER",
+    },
+  });
+
+  // Associer l'équipe à l'événement
+  const eventTeam = await prisma.eventTeam.create({
+    data: {
+      eventId,
+      teamId: team.id,
+    },
+  });
+
+  return { team, eventTeam };
+};

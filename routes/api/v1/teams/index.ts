@@ -3,112 +3,14 @@ import express from "express";
 import { authenticateJWT } from "../../../../middlewares/authMiddleware";
 import { validate } from "../../../../middlewares/validationMiddleware";
 import {
-  createTeam,
   getTeamById,
   getUserTeams,
   joinTeamWithInviteCode,
 } from "../../../../services/teams/teamService";
-import {
-  createTeamSchema,
-  joinTeamSchema,
-} from "../../../../validation/teamValidation";
+import { joinTeamSchema } from "../../../../validation/teamValidation";
 
 // Create router instance
 const router = express.Router();
-
-/**
- * @swagger
- * /api/v1/teams:
- *   post:
- *     summary: Créer une équipe
- *     description: Crée une nouvelle équipe pour l'utilisateur connecté
- *     tags: [Équipes]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - name
- *               - description
- *             properties:
- *               name:
- *                 type: string
- *                 description: Nom de l'équipe
- *                 example: Mon Équipe
- *               description:
- *                 type: string
- *                 description: Description de l'équipe
- *                 example: Description de mon équipe
- *     responses:
- *       201:
- *         description: Équipe créée avec succès
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Équipe créée avec succès
- *                 team:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: string
- *                       format: uuid
- *                     name:
- *                       type: string
- *                     description:
- *                       type: string
- *                     inviteCode:
- *                       type: string
- *       400:
- *         description: Données d'entrée invalides
- *       401:
- *         description: Non authentifié
- */
-router.post(
-  "/",
-  authenticateJWT,
-  validate(createTeamSchema),
-  async (req: Request, res: Response) => {
-    try {
-      const { name, description } = req.body;
-      const userId = req.user?.userId;
-
-      if (!userId) {
-        return res.status(401).json({ message: "Utilisateur non authentifié" });
-      }
-
-      if (!name) {
-        return res
-          .status(400)
-          .json({ message: "Le nom de l'équipe est requis" });
-      }
-
-      const team = await createTeam(name, description, userId);
-
-      return res.status(201).json({
-        message: "Équipe créée avec succès",
-        team,
-      });
-    } catch (error) {
-      console.error("Erreur lors de la création de l'équipe:", error);
-      if (error instanceof Error) {
-        return res.status(409).json({
-          message: error.message,
-        });
-      }
-      return res.status(500).json({
-        message: "Erreur lors de la création de l'équipe",
-      });
-    }
-  }
-);
 
 /**
  * @swagger
@@ -219,7 +121,7 @@ router.get("/", authenticateJWT, async (req: Request, res: Response) => {
  */
 router.get("/:teamId", authenticateJWT, async (req: Request, res: Response) => {
   try {
-    const teamId = req.params.id;
+    const teamId = req.params.teamId;
     const userId = req.user?.userId;
 
     if (!userId) {

@@ -1,31 +1,39 @@
 import type { Request, Response } from "express";
 import express from "express";
-import { authenticateJWT } from "../../../../middlewares/authMiddleware";
-import { validate } from "../../../../middlewares/validationMiddleware";
+import { authenticateJWT } from "../../../../../middlewares/authMiddleware";
+import { validate } from "../../../../../middlewares/validationMiddleware";
 import {
   assignUserToChallenge,
   createChallenge,
   getChallengeById,
-  getChallengesByTeamId,
+  getChallengesByEventId,
   solveChallenge,
-} from "../../../../services/challenges/challengeService";
+} from "../../../../../services/challenges/challengeService";
 import {
   assignChallengeSchema,
   createChallengeSchema,
   solveChallengeSchema,
-} from "../../../../validation/challengeValidation";
+} from "../../../../../validation/challengeValidation";
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 /**
  * @swagger
- * /api/v1/challenges:
+ * /api/v1/events/{eventId}/challenges:
  *   post:
  *     summary: Créer un challenge
- *     description: Crée un nouveau challenge pour une équipe
+ *     description: Crée un nouveau challenge pour un événement et une équipe
  *     tags: [Challenges]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID de l'événement
  *     requestBody:
  *       required: true
  *       content:
@@ -93,7 +101,9 @@ const router = express.Router();
  *       401:
  *         description: Non authentifié
  *       403:
- *         description: Non autorisé à créer un challenge pour cette équipe
+ *         description: Non autorisé à créer un challenge pour cet événement
+ *       404:
+ *         description: Événement non trouvé
  */
 router.post(
   "/",
@@ -101,6 +111,7 @@ router.post(
   validate(createChallengeSchema),
   async (req: Request, res: Response) => {
     try {
+      const { eventId } = req.params;
       const { name, description, category, points, teamId, flag } = req.body;
       const userId = req.user?.userId;
 
@@ -114,7 +125,7 @@ router.post(
         category,
         points,
         teamId,
-        undefined, // eventId
+        eventId,
         userId
       );
 
@@ -125,12 +136,15 @@ router.post(
     } catch (error) {
       console.error("Erreur lors de la création du challenge:", error);
       if (error instanceof Error) {
-        if (error.message === "Équipe non trouvée") {
+        if (
+          error.message === "Événement non trouvé" ||
+          error.message === "Équipe non trouvée"
+        ) {
           return res.status(404).json({ message: error.message });
         }
         if (
           error.message ===
-          "Non autorisé à créer un challenge pour cette équipe"
+          "Non autorisé à créer un challenge pour cet événement"
         ) {
           return res.status(403).json({ message: error.message });
         }
@@ -144,21 +158,21 @@ router.post(
 
 /**
  * @swagger
- * /api/v1/challenges/team/{teamId}:
+ * /api/v1/events/{eventId}/challenges:
  *   get:
- *     summary: Challenges d'une équipe
- *     description: Récupère la liste des challenges d'une équipe
+ *     summary: Challenges d'un événement
+ *     description: Récupère la liste des challenges d'un événement
  *     tags: [Challenges]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: teamId
+ *         name: eventId
  *         required: true
  *         schema:
  *           type: string
  *           format: uuid
- *         description: ID de l'équipe
+ *         description: ID de l'événement
  *     responses:
  *       200:
  *         description: Liste des challenges récupérée avec succès
@@ -188,50 +202,46 @@ router.post(
  *       401:
  *         description: Non authentifié
  *       403:
- *         description: Non autorisé à accéder aux challenges de cette équipe
+ *         description: Non autorisé à accéder aux challenges de cet événement
  *       404:
- *         description: Équipe non trouvée
+ *         description: Événement non trouvé
  */
-router.get(
-  "/team/:teamId",
-  authenticateJWT,
-  async (req: Request, res: Response) => {
-    try {
-      const { teamId } = req.params;
-      const userId = req.user?.userId;
+router.get("/", authenticateJWT, async (req: Request, res: Response) => {
+  try {
+    const { eventId } = req.params;
+    const userId = req.user?.userId;
 
-      if (!userId) {
-        return res.status(401).json({ message: "Utilisateur non authentifié" });
-      }
-
-      const challenges = await getChallengesByTeamId(teamId, userId);
-
-      return res.json({
-        challenges,
-      });
-    } catch (error) {
-      console.error("Erreur lors de la récupération des challenges:", error);
-      if (error instanceof Error) {
-        if (error.message === "Équipe non trouvée") {
-          return res.status(404).json({ message: error.message });
-        }
-        if (
-          error.message ===
-          "Non autorisé à accéder aux challenges de cette équipe"
-        ) {
-          return res.status(403).json({ message: error.message });
-        }
-      }
-      return res.status(500).json({
-        message: "Erreur lors de la récupération des challenges",
-      });
+    if (!userId) {
+      return res.status(401).json({ message: "Utilisateur non authentifié" });
     }
+
+    const challenges = await getChallengesByEventId(eventId, userId);
+
+    return res.json({
+      challenges,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des challenges:", error);
+    if (error instanceof Error) {
+      if (error.message === "Événement non trouvé") {
+        return res.status(404).json({ message: error.message });
+      }
+      if (
+        error.message ===
+        "Non autorisé à accéder aux challenges de cet événement"
+      ) {
+        return res.status(403).json({ message: error.message });
+      }
+    }
+    return res.status(500).json({
+      message: "Erreur lors de la récupération des challenges",
+    });
   }
-);
+});
 
 /**
  * @swagger
- * /api/v1/challenges/{challengeId}:
+ * /api/v1/events/{eventId}/challenges/{challengeId}:
  *   get:
  *     summary: Détails d'un challenge
  *     description: Récupère les détails d'un challenge spécifique
@@ -239,6 +249,13 @@ router.get(
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID de l'événement
  *       - in: path
  *         name: challengeId
  *         required: true
@@ -270,37 +287,6 @@ router.get(
  *                       type: integer
  *                     solved:
  *                       type: boolean
- *                     assignedUsers:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           id:
- *                             type: string
- *                             format: uuid
- *                           username:
- *                             type: string
- *                     notes:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           id:
- *                             type: string
- *                             format: uuid
- *                           content:
- *                             type: string
- *                           createdAt:
- *                             type: string
- *                             format: date-time
- *                           user:
- *                             type: object
- *                             properties:
- *                               id:
- *                                 type: string
- *                                 format: uuid
- *                               username:
- *                                 type: string
  *       401:
  *         description: Non authentifié
  *       403:
@@ -322,17 +308,16 @@ router.get(
 
       const challenge = await getChallengeById(challengeId, userId);
 
-      if (!challenge) {
-        return res.status(404).json({ message: "Challenge non trouvé" });
-      }
-
       return res.json({
         challenge,
       });
     } catch (error) {
       console.error("Erreur lors de la récupération du challenge:", error);
       if (error instanceof Error) {
-        if (error.message === "Non autorisé à accéder à ce challenge") {
+        if (error.message === "Challenge non trouvé") {
+          return res.status(404).json({ message: error.message });
+        }
+        if (error.message === "Vous n'avez pas accès à ce challenge") {
           return res.status(403).json({ message: error.message });
         }
       }
@@ -345,7 +330,7 @@ router.get(
 
 /**
  * @swagger
- * /api/v1/challenges/{challengeId}/solve:
+ * /api/v1/events/{eventId}/challenges/{challengeId}/solve:
  *   post:
  *     summary: Résoudre un challenge
  *     description: Soumet un flag pour résoudre un challenge
@@ -353,6 +338,13 @@ router.get(
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID de l'événement
  *       - in: path
  *         name: challengeId
  *         required: true
@@ -371,11 +363,11 @@ router.get(
  *             properties:
  *               flag:
  *                 type: string
- *                 description: Flag à soumettre
+ *                 description: Flag soumis pour résoudre le challenge
  *                 example: flag{test_flag}
  *     responses:
  *       200:
- *         description: Challenge résolu avec succès
+ *         description: Flag correct, challenge résolu
  *         content:
  *           application/json:
  *             schema:
@@ -383,13 +375,10 @@ router.get(
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Challenge résolu avec succès
- *                 success:
+ *                   example: Félicitations ! Flag correct.
+ *                 solved:
  *                   type: boolean
  *                   example: true
- *                 points:
- *                   type: integer
- *                   example: 100
  *       400:
  *         description: Données d'entrée invalides
  *       401:
@@ -398,8 +387,8 @@ router.get(
  *         description: Non autorisé à résoudre ce challenge
  *       404:
  *         description: Challenge non trouvé
- *       409:
- *         description: Challenge déjà résolu
+ *       422:
+ *         description: Flag incorrect
  */
 router.post(
   "/:challengeId/solve",
@@ -415,28 +404,30 @@ router.post(
         return res.status(401).json({ message: "Utilisateur non authentifié" });
       }
 
-      const challenge = await solveChallenge(challengeId, flag, userId);
+      const result = await solveChallenge(challengeId, flag, userId);
 
-      // Déterminer si le challenge a été résolu avec succès
-      const success = challenge && challenge.solved;
-      const points = challenge?.points || 0;
-
-      return res.json({
-        message: success ? "Challenge résolu avec succès" : "Flag incorrect",
-        success: success,
-        points: points,
-      });
+      if (result.solved) {
+        return res.json({
+          message: "Félicitations ! Flag correct.",
+          solved: true,
+        });
+      } else {
+        return res.status(422).json({
+          message: "Flag incorrect. Réessayez.",
+          solved: false,
+        });
+      }
     } catch (error) {
       console.error("Erreur lors de la résolution du challenge:", error);
       if (error instanceof Error) {
         if (error.message === "Challenge non trouvé") {
           return res.status(404).json({ message: error.message });
         }
-        if (error.message === "Non autorisé à résoudre ce challenge") {
+        if (error.message === "Vous n'avez pas accès à ce challenge") {
           return res.status(403).json({ message: error.message });
         }
-        if (error.message === "Challenge déjà résolu") {
-          return res.status(409).json({ message: error.message });
+        if (error.message === "Ce challenge est déjà résolu") {
+          return res.status(400).json({ message: error.message });
         }
       }
       return res.status(500).json({
@@ -448,14 +439,21 @@ router.post(
 
 /**
  * @swagger
- * /api/v1/challenges/{challengeId}/assign:
+ * /api/v1/events/{eventId}/challenges/{challengeId}/assign:
  *   post:
- *     summary: S'assigner à un challenge
- *     description: Permet à un utilisateur de s'assigner à un challenge
+ *     summary: Assigner un utilisateur à un challenge
+ *     description: Assigne un utilisateur à un challenge spécifique
  *     tags: [Challenges]
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID de l'événement
  *       - in: path
  *         name: challengeId
  *         required: true
@@ -463,9 +461,22 @@ router.post(
  *           type: string
  *           format: uuid
  *         description: ID du challenge
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 format: uuid
+ *                 description: ID de l'utilisateur à assigner
  *     responses:
  *       200:
- *         description: Utilisateur assigné au challenge avec succès
+ *         description: Utilisateur assigné avec succès
  *         content:
  *           application/json:
  *             schema:
@@ -474,22 +485,26 @@ router.post(
  *                 message:
  *                   type: string
  *                   example: Utilisateur assigné au challenge avec succès
- *                 challenge:
+ *                 assignment:
  *                   type: object
  *                   properties:
  *                     id:
  *                       type: string
  *                       format: uuid
- *                     name:
+ *                     challengeId:
  *                       type: string
+ *                       format: uuid
+ *                     userId:
+ *                       type: string
+ *                       format: uuid
+ *       400:
+ *         description: Données d'entrée invalides
  *       401:
  *         description: Non authentifié
  *       403:
- *         description: Non autorisé à s'assigner à ce challenge
+ *         description: Non autorisé à assigner un utilisateur à ce challenge
  *       404:
- *         description: Challenge non trouvé
- *       409:
- *         description: Utilisateur déjà assigné à ce challenge
+ *         description: Challenge ou utilisateur non trouvé
  */
 router.post(
   "/:challengeId/assign",
@@ -498,29 +513,42 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const { challengeId } = req.params;
+      const { userId: targetUserId } = req.body;
       const userId = req.user?.userId;
 
       if (!userId) {
         return res.status(401).json({ message: "Utilisateur non authentifié" });
       }
 
-      const challenge = await assignUserToChallenge(challengeId, userId);
+      const assignment = await assignUserToChallenge(
+        challengeId,
+        targetUserId,
+        userId
+      );
 
       return res.json({
         message: "Utilisateur assigné au challenge avec succès",
-        challenge,
+        assignment,
       });
     } catch (error) {
       console.error("Erreur lors de l'assignation au challenge:", error);
       if (error instanceof Error) {
-        if (error.message === "Challenge non trouvé") {
+        if (
+          error.message === "Challenge non trouvé" ||
+          error.message === "Utilisateur non trouvé"
+        ) {
           return res.status(404).json({ message: error.message });
         }
-        if (error.message === "Non autorisé à s'assigner à ce challenge") {
+        if (
+          error.message ===
+          "Non autorisé à assigner un utilisateur à ce challenge"
+        ) {
           return res.status(403).json({ message: error.message });
         }
-        if (error.message === "Utilisateur déjà assigné à ce challenge") {
-          return res.status(409).json({ message: error.message });
+        if (
+          error.message === "Cet utilisateur est déjà assigné à ce challenge"
+        ) {
+          return res.status(400).json({ message: error.message });
         }
       }
       return res.status(500).json({

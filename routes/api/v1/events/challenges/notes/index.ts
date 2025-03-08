@@ -1,20 +1,20 @@
 import type { Request, Response } from "express";
 import express from "express";
-import { authenticateJWT } from "../../../../middlewares/authMiddleware";
-import { validate } from "../../../../middlewares/validationMiddleware";
+import { authenticateJWT } from "../../../../../../middlewares/authMiddleware";
+import { validate } from "../../../../../../middlewares/validationMiddleware";
 import {
   addNoteToChallenge,
   deleteNoteById,
   getNotesByChallengeId,
   updateNoteById,
-} from "../../../../services/notes/noteService";
-import { addNoteSchema } from "../../../../validation/challengeValidation";
+} from "../../../../../../services/notes/noteService";
+import { addNoteSchema } from "../../../../../../validation/challengeValidation";
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 /**
  * @swagger
- * /api/v1/notes/challenge/{challengeId}:
+ * /api/v1/events/{eventId}/challenges/{challengeId}/notes:
  *   get:
  *     summary: Notes d'un challenge
  *     description: Récupère toutes les notes associées à un challenge spécifique
@@ -22,6 +22,13 @@ const router = express.Router();
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID de l'événement
  *       - in: path
  *         name: challengeId
  *         required: true
@@ -68,45 +75,41 @@ const router = express.Router();
  *       404:
  *         description: Challenge non trouvé
  */
-router.get(
-  "/challenge/:challengeId",
-  authenticateJWT,
-  async (req: Request, res: Response) => {
-    try {
-      const { challengeId } = req.params;
-      const userId = req.user?.userId;
+router.get("/", authenticateJWT, async (req: Request, res: Response) => {
+  try {
+    const { challengeId } = req.params;
+    const userId = req.user?.userId;
 
-      if (!userId) {
-        return res.status(401).json({ message: "Utilisateur non authentifié" });
-      }
-
-      const notes = await getNotesByChallengeId(challengeId, userId);
-
-      return res.json({
-        notes,
-      });
-    } catch (error) {
-      console.error("Erreur lors de la récupération des notes:", error);
-      if (error instanceof Error) {
-        if (error.message === "Challenge non trouvé") {
-          return res.status(404).json({ message: error.message });
-        }
-        if (
-          error.message === "Non autorisé à accéder aux notes de ce challenge"
-        ) {
-          return res.status(403).json({ message: error.message });
-        }
-      }
-      return res.status(500).json({
-        message: "Erreur lors de la récupération des notes",
-      });
+    if (!userId) {
+      return res.status(401).json({ message: "Utilisateur non authentifié" });
     }
+
+    const notes = await getNotesByChallengeId(challengeId, userId);
+
+    return res.json({
+      notes,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des notes:", error);
+    if (error instanceof Error) {
+      if (error.message === "Challenge non trouvé") {
+        return res.status(404).json({ message: error.message });
+      }
+      if (
+        error.message === "Non autorisé à accéder aux notes de ce challenge"
+      ) {
+        return res.status(403).json({ message: error.message });
+      }
+    }
+    return res.status(500).json({
+      message: "Erreur lors de la récupération des notes",
+    });
   }
-);
+});
 
 /**
  * @swagger
- * /api/v1/notes/challenge/{challengeId}:
+ * /api/v1/events/{eventId}/challenges/{challengeId}/notes:
  *   post:
  *     summary: Ajouter une note
  *     description: Ajoute une nouvelle note à un challenge
@@ -114,6 +117,13 @@ router.get(
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID de l'événement
  *       - in: path
  *         name: challengeId
  *         required: true
@@ -166,7 +176,7 @@ router.get(
  *         description: Challenge non trouvé
  */
 router.post(
-  "/challenge/:challengeId",
+  "/",
   authenticateJWT,
   validate(addNoteSchema),
   async (req: Request, res: Response) => {
@@ -206,14 +216,28 @@ router.post(
 
 /**
  * @swagger
- * /api/v1/notes/{noteId}:
+ * /api/v1/events/{eventId}/challenges/{challengeId}/notes/{noteId}:
  *   put:
- *     summary: Mettre à jour une note
- *     description: Met à jour le contenu d'une note existante
+ *     summary: Modifier une note
+ *     description: Modifie une note existante
  *     tags: [Notes]
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID de l'événement
+ *       - in: path
+ *         name: challengeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID du challenge
  *       - in: path
  *         name: noteId
  *         required: true
@@ -236,7 +260,7 @@ router.post(
  *                 example: Mise à jour de la piste pour résoudre ce challenge...
  *     responses:
  *       200:
- *         description: Note mise à jour avec succès
+ *         description: Note modifiée avec succès
  *         content:
  *           application/json:
  *             schema:
@@ -244,7 +268,7 @@ router.post(
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Note mise à jour avec succès
+ *                   example: Note modifiée avec succès
  *                 note:
  *                   type: object
  *                   properties:
@@ -275,18 +299,14 @@ router.put("/:noteId", authenticateJWT, async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Utilisateur non authentifié" });
     }
 
-    if (!content) {
-      return res.status(400).json({ message: "Le contenu est requis" });
-    }
-
     const note = await updateNoteById(noteId, content, userId);
 
     return res.json({
-      message: "Note mise à jour avec succès",
+      message: "Note modifiée avec succès",
       note,
     });
   } catch (error) {
-    console.error("Erreur lors de la mise à jour de la note:", error);
+    console.error("Erreur lors de la modification de la note:", error);
     if (error instanceof Error) {
       if (error.message === "Note non trouvée") {
         return res.status(404).json({ message: error.message });
@@ -296,14 +316,14 @@ router.put("/:noteId", authenticateJWT, async (req: Request, res: Response) => {
       }
     }
     return res.status(500).json({
-      message: "Erreur lors de la mise à jour de la note",
+      message: "Erreur lors de la modification de la note",
     });
   }
 });
 
 /**
  * @swagger
- * /api/v1/notes/{noteId}:
+ * /api/v1/events/{eventId}/challenges/{challengeId}/notes/{noteId}:
  *   delete:
  *     summary: Supprimer une note
  *     description: Supprime une note existante
@@ -311,6 +331,20 @@ router.put("/:noteId", authenticateJWT, async (req: Request, res: Response) => {
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID de l'événement
+ *       - in: path
+ *         name: challengeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID du challenge
  *       - in: path
  *         name: noteId
  *         required: true

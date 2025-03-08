@@ -123,13 +123,13 @@ model Challenge {
   solved      Boolean   @default(false)
   solvedAt    DateTime?
   externalId  String?
-  eventId     String?
+  eventId     String
   teamId      String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   // Relations
-  event       Event?                @relation("EventChallenges", fields: [eventId], references: [id], onDelete: SetNull)
+  event       Event                 @relation("EventChallenges", fields: [eventId], references: [id], onDelete: Cascade)
   team        Team                  @relation(fields: [teamId], references: [id], onDelete: Cascade)
   assignments ChallengeAssignment[]
   notes       Note[]                @relation("ChallengeNotes")
@@ -137,7 +137,7 @@ model Challenge {
   uploads     Upload[]              @relation("ChallengeUploads")
 
   @@unique([externalId, eventId, teamId])
-  @@unique([name, teamId])
+  @@unique([name, teamId, eventId])
 }
 
 // Assignation des utilisateurs aux challenges
