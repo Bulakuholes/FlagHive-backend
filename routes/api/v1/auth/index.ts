@@ -12,6 +12,7 @@ import {
   findUserByEmail,
   findUserByUsername,
 } from "../../../../services/userService";
+import { sendError, sendSuccess } from "../../../../utils/responseHandler";
 import {
   loginSchema,
   registerSchema,
@@ -60,21 +61,33 @@ const router = express.Router();
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
  *                 message:
  *                   type: string
  *                   example: Utilisateur créé avec succès
- *                 user:
+ *                 data:
  *                   type: object
  *                   properties:
- *                     id:
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                           format: uuid
+ *                         username:
+ *                           type: string
+ *                         email:
+ *                           type: string
+ *                         role:
+ *                           type: string
+ *                 meta:
+ *                   type: object
+ *                   properties:
+ *                     timestamp:
  *                       type: string
- *                       format: uuid
- *                     username:
- *                       type: string
- *                     email:
- *                       type: string
- *                     role:
- *                       type: string
+ *                       format: date-time
  *       400:
  *         description: Données d'entrée invalides
  *       409:
@@ -93,14 +106,17 @@ router.post(
       // Vérification si l'utilisateur existe déjà
       const existingUser = await findUserByUsername(username);
       if (existingUser) {
-        return res
-          .status(409)
-          .json({ message: "Ce nom d'utilisateur est déjà utilisé" });
+        return sendError(
+          res,
+          "Ce nom d'utilisateur est déjà utilisé",
+          409,
+          "USERNAME_TAKEN"
+        );
       }
 
       const existingEmail = await findUserByEmail(email);
       if (existingEmail) {
-        return res.status(409).json({ message: "Cet email est déjà utilisé" });
+        return sendError(res, "Cet email est déjà utilisé", 409, "EMAIL_TAKEN");
       }
 
       // Création de l'utilisateur
@@ -109,15 +125,20 @@ router.post(
       // Suppression du mot de passe hashé de la réponse
       const { hashedPassword, ...userWithoutPassword } = user;
 
-      return res.status(201).json({
-        message: "Utilisateur créé avec succès",
-        user: userWithoutPassword,
-      });
+      return sendSuccess(
+        res,
+        "Utilisateur créé avec succès",
+        { user: userWithoutPassword },
+        201
+      );
     } catch (error) {
       console.error("Erreur lors de l'inscription:", error);
-      return res.status(500).json({
-        message: "Erreur lors de la création de l'utilisateur",
-      });
+      return sendError(
+        res,
+        "Erreur lors de la création de l'utilisateur",
+        500,
+        "SERVER_ERROR"
+      );
     }
   }
 );
@@ -156,24 +177,36 @@ router.post(
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
  *                 message:
  *                   type: string
  *                   example: Connexion réussie
- *                 user:
+ *                 data:
  *                   type: object
  *                   properties:
- *                     id:
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                           format: uuid
+ *                         username:
+ *                           type: string
+ *                         email:
+ *                           type: string
+ *                         role:
+ *                           type: string
+ *                     token:
  *                       type: string
- *                       format: uuid
- *                     username:
+ *                       description: Token JWT pour l'authentification
+ *                 meta:
+ *                   type: object
+ *                   properties:
+ *                     timestamp:
  *                       type: string
- *                     email:
- *                       type: string
- *                     role:
- *                       type: string
- *                 token:
- *                   type: string
- *                   description: Token JWT pour l'authentification
+ *                       format: date-time
  *       400:
  *         description: Données d'entrée invalides
  *       401:
@@ -193,26 +226,25 @@ router.post(
       const result = await authenticateUser(username, password);
 
       if (!result) {
-        return res.status(401).json({
-          message: "Nom d'utilisateur ou mot de passe incorrect",
-        });
+        return sendError(
+          res,
+          "Nom d'utilisateur ou mot de passe incorrect",
+          401,
+          "INVALID_CREDENTIALS"
+        );
       }
 
       const { user, token } = result;
 
-      // Suppression du mot de passe hashé de la réponse
-      const { hashedPassword, ...userWithoutPassword } = user;
-
-      return res.json({
-        message: "Connexion réussie",
-        user: userWithoutPassword,
-        token,
-      });
+      return sendSuccess(res, "Connexion réussie", { user, token });
     } catch (error) {
       console.error("Erreur lors de la connexion:", error);
-      return res.status(500).json({
-        message: "Erreur lors de la connexion",
-      });
+      return sendError(
+        res,
+        "Erreur lors de l'authentification",
+        500,
+        "SERVER_ERROR"
+      );
     }
   }
 );
@@ -221,47 +253,72 @@ router.post(
  * @swagger
  * /api/v1/auth/me:
  *   get:
- *     summary: Profil de l'utilisateur
+ *     summary: Profil de l'utilisateur connecté
  *     description: Récupère les informations de l'utilisateur connecté
  *     tags: [Authentification]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Informations de l'utilisateur récupérées avec succès
+ *         description: Profil récupéré avec succès
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 user:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Profil récupéré avec succès
+ *                 data:
  *                   type: object
  *                   properties:
- *                     id:
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                           format: uuid
+ *                         username:
+ *                           type: string
+ *                         email:
+ *                           type: string
+ *                         role:
+ *                           type: string
+ *                 meta:
+ *                   type: object
+ *                   properties:
+ *                     timestamp:
  *                       type: string
- *                       format: uuid
- *                     username:
- *                       type: string
- *                     email:
- *                       type: string
- *                     role:
- *                       type: string
+ *                       format: date-time
  *       401:
  *         description: Non authentifié
  */
-/**
- * Route pour obtenir le profil de l'utilisateur connecté
- */
 router.get("/me", authenticateJWT, async (req: Request, res: Response) => {
   try {
-    return res.json({
-      user: req.user,
-    });
+    // L'utilisateur est déjà récupéré par le middleware authenticateJWT
+    const user = req.user;
+
+    if (!user) {
+      return sendError(
+        res,
+        "Utilisateur non authentifié",
+        401,
+        "NOT_AUTHENTICATED"
+      );
+    }
+
+    return sendSuccess(res, "Profil récupéré avec succès", { user });
   } catch (error) {
     console.error("Erreur lors de la récupération du profil:", error);
-    return res.status(500).json({
-      message: "Erreur lors de la récupération du profil",
-    });
+    return sendError(
+      res,
+      "Erreur lors de la récupération du profil",
+      500,
+      "SERVER_ERROR"
+    );
   }
 });
 
@@ -273,8 +330,7 @@ router.get(
   authenticateJWT,
   requireRole(["ADMIN"]),
   async (req: Request, res: Response) => {
-    return res.json({
-      message: "Route d'administration accessible",
+    return sendSuccess(res, "Route d'administration accessible", {
       user: req.user,
     });
   }

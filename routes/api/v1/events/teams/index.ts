@@ -3,6 +3,7 @@ import express from "express";
 import { authenticateJWT } from "../../../../../middlewares/authMiddleware";
 import { validate } from "../../../../../middlewares/validationMiddleware";
 import { createTeamForEvent } from "../../../../../services/teams/teamService";
+import { sendError, sendSuccess } from "../../../../../utils/responseHandler";
 import { createTeamSchema } from "../../../../../validation/teamValidation";
 
 const router = express.Router({ mergeParams: true });
@@ -85,7 +86,12 @@ router.post(
       const userId = req.user?.userId;
 
       if (!userId) {
-        return res.status(401).json({ message: "Utilisateur non authentifié" });
+        return sendError(
+          res,
+          "Utilisateur non authentifié",
+          401,
+          "UNAUTHORIZED"
+        );
       }
 
       const result = await createTeamForEvent(
@@ -96,24 +102,31 @@ router.post(
         eventId
       );
 
-      return res.status(201).json({
-        message: "Équipe créée avec succès et associée à l'événement",
-        team: result.team,
-        eventTeam: result.eventTeam,
-      });
+      return sendSuccess(
+        res,
+        "Équipe créée avec succès et associée à l'événement",
+        {
+          team: result.team,
+          eventTeam: result.eventTeam,
+        },
+        201
+      );
     } catch (error) {
       console.error("Erreur lors de la création de l'équipe:", error);
       if (error instanceof Error) {
         if (error.message === "Événement non trouvé") {
-          return res.status(404).json({ message: error.message });
+          return sendError(res, error.message, 404, "RESOURCE_NOT_FOUND");
         }
         if (error.message === "Une équipe avec ce nom existe déjà") {
-          return res.status(400).json({ message: error.message });
+          return sendError(res, error.message, 400, "DUPLICATE_RESOURCE");
         }
       }
-      return res.status(500).json({
-        message: "Erreur lors de la création de l'équipe",
-      });
+      return sendError(
+        res,
+        "Erreur lors de la création de l'équipe",
+        500,
+        "SERVER_ERROR"
+      );
     }
   }
 );
@@ -166,19 +179,22 @@ router.get("/", authenticateJWT, async (req: Request, res: Response) => {
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ message: "Utilisateur non authentifié" });
+      return sendError(res, "Utilisateur non authentifié", 401, "UNAUTHORIZED");
     }
 
     // Cette fonctionnalité sera implémentée ultérieurement
     // Pour l'instant, nous renvoyons une réponse vide
-    return res.json({
+    return sendSuccess(res, "Liste des équipes récupérée avec succès", {
       teams: [],
     });
   } catch (error) {
     console.error("Erreur lors de la récupération des équipes:", error);
-    return res.status(500).json({
-      message: "Erreur lors de la récupération des équipes",
-    });
+    return sendError(
+      res,
+      "Erreur lors de la récupération des équipes",
+      500,
+      "SERVER_ERROR"
+    );
   }
 });
 

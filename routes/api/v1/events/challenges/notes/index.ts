@@ -8,6 +8,10 @@ import {
   getNotesByChallengeId,
   updateNoteById,
 } from "../../../../../../services/notes/noteService";
+import {
+  sendError,
+  sendSuccess,
+} from "../../../../../../utils/responseHandler";
 import { addNoteSchema } from "../../../../../../validation/challengeValidation";
 
 const router = express.Router({ mergeParams: true });
@@ -81,29 +85,30 @@ router.get("/", authenticateJWT, async (req: Request, res: Response) => {
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ message: "Utilisateur non authentifié" });
+      return sendError(res, "Utilisateur non authentifié", 401, "UNAUTHORIZED");
     }
 
     const notes = await getNotesByChallengeId(challengeId, userId);
 
-    return res.json({
-      notes,
-    });
+    return sendSuccess(res, "Notes récupérées avec succès", { notes });
   } catch (error) {
     console.error("Erreur lors de la récupération des notes:", error);
     if (error instanceof Error) {
       if (error.message === "Challenge non trouvé") {
-        return res.status(404).json({ message: error.message });
+        return sendError(res, error.message, 404, "RESOURCE_NOT_FOUND");
       }
       if (
         error.message === "Non autorisé à accéder aux notes de ce challenge"
       ) {
-        return res.status(403).json({ message: error.message });
+        return sendError(res, error.message, 403, "FORBIDDEN_ACCESS");
       }
     }
-    return res.status(500).json({
-      message: "Erreur lors de la récupération des notes",
-    });
+    return sendError(
+      res,
+      "Erreur lors de la récupération des notes",
+      500,
+      "SERVER_ERROR"
+    );
   }
 });
 
@@ -186,30 +191,35 @@ router.post(
       const userId = req.user?.userId;
 
       if (!userId) {
-        return res.status(401).json({ message: "Utilisateur non authentifié" });
+        return sendError(
+          res,
+          "Utilisateur non authentifié",
+          401,
+          "UNAUTHORIZED"
+        );
       }
 
       const note = await addNoteToChallenge(challengeId, content, userId);
 
-      return res.status(201).json({
-        message: "Note ajoutée avec succès",
-        note,
-      });
+      return sendSuccess(res, "Note ajoutée avec succès", { note }, 201);
     } catch (error) {
       console.error("Erreur lors de l'ajout de la note:", error);
       if (error instanceof Error) {
         if (error.message === "Challenge non trouvé") {
-          return res.status(404).json({ message: error.message });
+          return sendError(res, error.message, 404, "RESOURCE_NOT_FOUND");
         }
         if (
           error.message === "Non autorisé à ajouter une note à ce challenge"
         ) {
-          return res.status(403).json({ message: error.message });
+          return sendError(res, error.message, 403, "FORBIDDEN_ACCESS");
         }
       }
-      return res.status(500).json({
-        message: "Erreur lors de l'ajout de la note",
-      });
+      return sendError(
+        res,
+        "Erreur lors de l'ajout de la note",
+        500,
+        "SERVER_ERROR"
+      );
     }
   }
 );
@@ -296,28 +306,28 @@ router.put("/:noteId", authenticateJWT, async (req: Request, res: Response) => {
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ message: "Utilisateur non authentifié" });
+      return sendError(res, "Utilisateur non authentifié", 401, "UNAUTHORIZED");
     }
 
     const note = await updateNoteById(noteId, content, userId);
 
-    return res.json({
-      message: "Note modifiée avec succès",
-      note,
-    });
+    return sendSuccess(res, "Note modifiée avec succès", { note });
   } catch (error) {
     console.error("Erreur lors de la modification de la note:", error);
     if (error instanceof Error) {
       if (error.message === "Note non trouvée") {
-        return res.status(404).json({ message: error.message });
+        return sendError(res, error.message, 404, "RESOURCE_NOT_FOUND");
       }
       if (error.message === "Non autorisé à modifier cette note") {
-        return res.status(403).json({ message: error.message });
+        return sendError(res, error.message, 403, "FORBIDDEN_ACCESS");
       }
     }
-    return res.status(500).json({
-      message: "Erreur lors de la modification de la note",
-    });
+    return sendError(
+      res,
+      "Erreur lors de la modification de la note",
+      500,
+      "SERVER_ERROR"
+    );
   }
 });
 
@@ -379,27 +389,33 @@ router.delete(
       const userId = req.user?.userId;
 
       if (!userId) {
-        return res.status(401).json({ message: "Utilisateur non authentifié" });
+        return sendError(
+          res,
+          "Utilisateur non authentifié",
+          401,
+          "UNAUTHORIZED"
+        );
       }
 
       await deleteNoteById(noteId, userId);
 
-      return res.json({
-        message: "Note supprimée avec succès",
-      });
+      return sendSuccess(res, "Note supprimée avec succès");
     } catch (error) {
       console.error("Erreur lors de la suppression de la note:", error);
       if (error instanceof Error) {
         if (error.message === "Note non trouvée") {
-          return res.status(404).json({ message: error.message });
+          return sendError(res, error.message, 404, "RESOURCE_NOT_FOUND");
         }
         if (error.message === "Non autorisé à supprimer cette note") {
-          return res.status(403).json({ message: error.message });
+          return sendError(res, error.message, 403, "FORBIDDEN_ACCESS");
         }
       }
-      return res.status(500).json({
-        message: "Erreur lors de la suppression de la note",
-      });
+      return sendError(
+        res,
+        "Erreur lors de la suppression de la note",
+        500,
+        "SERVER_ERROR"
+      );
     }
   }
 );

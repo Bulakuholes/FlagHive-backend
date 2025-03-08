@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import express from "express";
+import { sendError, sendSuccess } from "../../../../utils/responseHandler";
 
 const router = express.Router();
 
@@ -28,12 +29,15 @@ router.get("/token", (req: Request, res: Response) => {
   const csrfToken = req.csrfToken?.();
 
   if (!csrfToken) {
-    return res.status(500).json({
-      message: "Erreur lors de la génération du token CSRF",
-    });
+    return sendError(
+      res,
+      "Erreur lors de la génération du token CSRF",
+      500,
+      "CSRF_TOKEN_ERROR"
+    );
   }
 
-  return res.json({
+  return sendSuccess(res, "Token CSRF généré avec succès", {
     csrfToken,
   });
 });

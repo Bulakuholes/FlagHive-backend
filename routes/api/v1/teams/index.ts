@@ -7,6 +7,7 @@ import {
   getUserTeams,
   joinTeamWithInviteCode,
 } from "../../../../services/teams/teamService";
+import { sendError, sendSuccess } from "../../../../utils/responseHandler";
 import { joinTeamSchema } from "../../../../validation/teamValidation";
 
 // Create router instance
@@ -29,20 +30,35 @@ const router = express.Router();
  *             schema:
  *               type: object
  *               properties:
- *                 teams:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                         format: uuid
- *                       name:
- *                         type: string
- *                       description:
- *                         type: string
- *                       inviteCode:
- *                         type: string
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Liste des équipes récupérée avec succès
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     teams:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                             format: uuid
+ *                           name:
+ *                             type: string
+ *                           description:
+ *                             type: string
+ *                           inviteCode:
+ *                             type: string
+ *                 meta:
+ *                   type: object
+ *                   properties:
+ *                     timestamp:
+ *                       type: string
+ *                       format: date-time
  *       401:
  *         description: Non authentifié
  */
@@ -51,17 +67,27 @@ router.get("/", authenticateJWT, async (req: Request, res: Response) => {
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ message: "Utilisateur non authentifié" });
+      return sendError(
+        res,
+        "Utilisateur non authentifié",
+        401,
+        "NOT_AUTHENTICATED"
+      );
     }
 
     const teams = await getUserTeams(userId);
 
-    return res.json({ teams });
+    return sendSuccess(res, "Liste des équipes récupérée avec succès", {
+      teams,
+    });
   } catch (error) {
     console.error("Erreur lors de la récupération des équipes:", error);
-    return res.status(500).json({
-      message: "Erreur lors de la récupération des équipes",
-    });
+    return sendError(
+      res,
+      "Erreur lors de la récupération des équipes",
+      500,
+      "SERVER_ERROR"
+    );
   }
 });
 
@@ -90,30 +116,45 @@ router.get("/", authenticateJWT, async (req: Request, res: Response) => {
  *             schema:
  *               type: object
  *               properties:
- *                 team:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Détails de l'équipe récupérés avec succès
+ *                 data:
  *                   type: object
  *                   properties:
- *                     id:
+ *                     team:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                           format: uuid
+ *                         name:
+ *                           type: string
+ *                         description:
+ *                           type: string
+ *                         inviteCode:
+ *                           type: string
+ *                         members:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               id:
+ *                                 type: string
+ *                                 format: uuid
+ *                               username:
+ *                                 type: string
+ *                               email:
+ *                                 type: string
+ *                 meta:
+ *                   type: object
+ *                   properties:
+ *                     timestamp:
  *                       type: string
- *                       format: uuid
- *                     name:
- *                       type: string
- *                     description:
- *                       type: string
- *                     inviteCode:
- *                       type: string
- *                     members:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           id:
- *                             type: string
- *                             format: uuid
- *                           username:
- *                             type: string
- *                           email:
- *                             type: string
+ *                       format: date-time
  *       401:
  *         description: Non authentifié
  *       404:
@@ -125,29 +166,39 @@ router.get("/:teamId", authenticateJWT, async (req: Request, res: Response) => {
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ message: "Utilisateur non authentifié" });
+      return sendError(
+        res,
+        "Utilisateur non authentifié",
+        401,
+        "NOT_AUTHENTICATED"
+      );
     }
 
     const team = await getTeamById(teamId, userId);
 
     if (!team) {
-      return res.status(404).json({ message: "Équipe non trouvée" });
+      return sendError(res, "Équipe non trouvée", 404, "TEAM_NOT_FOUND");
     }
 
-    return res.json({ team });
+    return sendSuccess(res, "Détails de l'équipe récupérés avec succès", {
+      team,
+    });
   } catch (error) {
     console.error("Erreur lors de la récupération de l'équipe:", error);
     if (error instanceof Error) {
       if (error.message === "Accès non autorisé à cette équipe") {
-        return res.status(403).json({ message: error.message });
+        return sendError(res, error.message, 403, "FORBIDDEN_ACCESS");
       }
       if (error.message === "Équipe non trouvée") {
-        return res.status(404).json({ message: error.message });
+        return sendError(res, error.message, 404, "TEAM_NOT_FOUND");
       }
     }
-    return res.status(500).json({
-      message: "Erreur lors de la récupération de l'équipe",
-    });
+    return sendError(
+      res,
+      "Erreur lors de la récupération de l'équipe",
+      500,
+      "SERVER_ERROR"
+    );
   }
 });
 
@@ -181,27 +232,37 @@ router.get("/:teamId", authenticateJWT, async (req: Request, res: Response) => {
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
  *                 message:
  *                   type: string
  *                   example: Équipe rejointe avec succès
- *                 team:
+ *                 data:
  *                   type: object
  *                   properties:
- *                     id:
+ *                     team:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                           format: uuid
+ *                         name:
+ *                           type: string
+ *                         description:
+ *                           type: string
+ *                 meta:
+ *                   type: object
+ *                   properties:
+ *                     timestamp:
  *                       type: string
- *                       format: uuid
- *                     name:
- *                       type: string
- *                     description:
- *                       type: string
+ *                       format: date-time
  *       400:
  *         description: Données d'entrée invalides
  *       401:
  *         description: Non authentifié
  *       404:
  *         description: Équipe non trouvée
- *       409:
- *         description: Utilisateur déjà membre de l'équipe
  */
 router.post(
   "/join",
@@ -213,34 +274,36 @@ router.post(
       const userId = req.user?.userId;
 
       if (!userId) {
-        return res.status(401).json({ message: "Utilisateur non authentifié" });
-      }
-
-      if (!inviteCode) {
-        return res
-          .status(400)
-          .json({ message: "Le code d'invitation est requis" });
+        return sendError(
+          res,
+          "Utilisateur non authentifié",
+          401,
+          "NOT_AUTHENTICATED"
+        );
       }
 
       const team = await joinTeamWithInviteCode(inviteCode, userId);
 
-      return res.json({
-        message: "Vous avez rejoint l'équipe avec succès",
-        team,
-      });
+      return sendSuccess(res, "Équipe rejointe avec succès", { team });
     } catch (error) {
-      console.error("Erreur lors de l'ajout à l'équipe:", error);
+      console.error(
+        "Erreur lors de la tentative de rejoindre l'équipe:",
+        error
+      );
       if (error instanceof Error) {
         if (error.message === "Code d'invitation invalide") {
-          return res.status(404).json({ message: error.message });
+          return sendError(res, error.message, 400, "INVALID_INVITE_CODE");
         }
         if (error.message === "Vous êtes déjà membre de cette équipe") {
-          return res.status(409).json({ message: error.message });
+          return sendError(res, error.message, 400, "ALREADY_TEAM_MEMBER");
         }
       }
-      return res.status(500).json({
-        message: "Erreur lors de l'ajout à l'équipe",
-      });
+      return sendError(
+        res,
+        "Erreur lors de la tentative de rejoindre l'équipe",
+        500,
+        "SERVER_ERROR"
+      );
     }
   }
 );

@@ -7,6 +7,7 @@ import {
   getEventById,
   getEvents,
 } from "../../../../services/events/eventService";
+import { sendError, sendSuccess } from "../../../../utils/responseHandler";
 import { createEventSchema } from "../../../../validation/eventValidation";
 import challengesRoutes from "./challenges";
 import challengeNotesRoutes from "./challenges/notes";
@@ -57,19 +58,22 @@ router.get("/", authenticateJWT, async (req: Request, res: Response) => {
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ message: "Utilisateur non authentifié" });
+      return sendError(res, "Utilisateur non authentifié", 401, "UNAUTHORIZED");
     }
 
     const events = await getEvents(userId);
 
-    return res.json({
+    return sendSuccess(res, "Liste des événements récupérée avec succès", {
       events,
     });
   } catch (error) {
     console.error("Erreur lors de la récupération des événements:", error);
-    return res.status(500).json({
-      message: "Erreur lors de la récupération des événements",
-    });
+    return sendError(
+      res,
+      "Erreur lors de la récupération des événements",
+      500,
+      "SERVER_ERROR"
+    );
   }
 });
 
@@ -162,7 +166,12 @@ router.post(
       const userId = req.user?.userId;
 
       if (!userId) {
-        return res.status(401).json({ message: "Utilisateur non authentifié" });
+        return sendError(
+          res,
+          "Utilisateur non authentifié",
+          401,
+          "UNAUTHORIZED"
+        );
       }
 
       const event = await createEvent(
@@ -176,15 +185,15 @@ router.post(
         userId
       );
 
-      return res.status(201).json({
-        message: "Événement créé avec succès",
-        event,
-      });
+      return sendSuccess(res, "Événement créé avec succès", { event }, 201);
     } catch (error) {
       console.error("Erreur lors de la création de l'événement:", error);
-      return res.status(500).json({
-        message: "Erreur lors de la création de l'événement",
-      });
+      return sendError(
+        res,
+        "Erreur lors de la création de l'événement",
+        500,
+        "SERVER_ERROR"
+      );
     }
   }
 );
@@ -246,27 +255,35 @@ router.get(
       const userId = req.user?.userId;
 
       if (!userId) {
-        return res.status(401).json({ message: "Utilisateur non authentifié" });
+        return sendError(
+          res,
+          "Utilisateur non authentifié",
+          401,
+          "UNAUTHORIZED"
+        );
       }
 
       const event = await getEventById(eventId, userId);
 
-      return res.json({
+      return sendSuccess(res, "Détails de l'événement récupérés avec succès", {
         event,
       });
     } catch (error) {
       console.error("Erreur lors de la récupération de l'événement:", error);
       if (error instanceof Error) {
         if (error.message === "Événement non trouvé") {
-          return res.status(404).json({ message: error.message });
+          return sendError(res, error.message, 404, "RESOURCE_NOT_FOUND");
         }
         if (error.message === "Non autorisé à accéder à cet événement") {
-          return res.status(403).json({ message: error.message });
+          return sendError(res, error.message, 403, "FORBIDDEN_ACCESS");
         }
       }
-      return res.status(500).json({
-        message: "Erreur lors de la récupération de l'événement",
-      });
+      return sendError(
+        res,
+        "Erreur lors de la récupération de l'événement",
+        500,
+        "SERVER_ERROR"
+      );
     }
   }
 );
