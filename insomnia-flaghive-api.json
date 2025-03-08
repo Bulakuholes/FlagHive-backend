@@ -1,7 +1,7 @@
 {
   "_type": "export",
   "__export_format": 4,
-  "__export_date": "2025-03-08T00:24:08.000Z",
+  "__export_date": "2025-03-08T14:48:37.000Z",
   "__export_source": "insomnia.desktop.app:v2023.5.8",
   "resources": [
     {
@@ -31,11 +31,43 @@
       "_type": "workspace"
     },
     {
+      "_id": "req_api_v1_root",
+      "parentId": "wrk_flaghive",
+      "modified": 1741445317000,
+      "created": 1741445317000,
+      "url": "{{ _.base_url }}/api/v1",
+      "name": "API v1 Root",
+      "description": "Vérifier que l'API v1 est en ligne",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1709939047950,
+      "_type": "request"
+    },
+    {
+      "_id": "req_swagger_docs",
+      "parentId": "wrk_flaghive",
+      "modified": 1741445317000,
+      "created": 1741445317000,
+      "url": "{{ _.base_url }}/docs",
+      "name": "Documentation Swagger",
+      "description": "Accéder à la documentation Swagger de l'API",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1709939047925,
+      "_type": "request"
+    },
+    {
       "_id": "req_csrf_token",
       "parentId": "fld_csrf",
-      "modified": 1709939048000,
+      "modified": 1741445317000,
       "created": 1709939048000,
-      "url": "{{ _.base_url }}/api/csrf/token",
+      "url": "{{ _.base_url }}/api/v1/csrf/token",
       "name": "Obtenir un token CSRF",
       "description": "Récupère un token CSRF pour les requêtes protégées",
       "method": "GET",
@@ -60,9 +92,9 @@
     {
       "_id": "req_register",
       "parentId": "fld_auth",
-      "modified": 1709939048000,
+      "modified": 1741445317000,
       "created": 1709939048000,
-      "url": "{{ _.base_url }}/api/auth/register",
+      "url": "{{ _.base_url }}/api/v1/auth/register",
       "name": "Inscription",
       "description": "Créer un nouveau compte utilisateur",
       "method": "POST",
@@ -95,9 +127,9 @@
     {
       "_id": "req_login",
       "parentId": "fld_auth",
-      "modified": 1709939048000,
+      "modified": 1741445317000,
       "created": 1709939048000,
-      "url": "{{ _.base_url }}/api/auth/login",
+      "url": "{{ _.base_url }}/api/v1/auth/login",
       "name": "Connexion",
       "description": "Se connecter avec un compte existant",
       "method": "POST",
@@ -119,9 +151,9 @@
     {
       "_id": "req_me",
       "parentId": "fld_auth",
-      "modified": 1709939048000,
+      "modified": 1741445317000,
       "created": 1709939048000,
-      "url": "{{ _.base_url }}/api/auth/me",
+      "url": "{{ _.base_url }}/api/v1/auth/me",
       "name": "Profil",
       "description": "Obtenir les informations de l'utilisateur connecté",
       "method": "GET",
@@ -138,9 +170,9 @@
     {
       "_id": "req_create_team",
       "parentId": "fld_teams",
-      "modified": 1709939048000,
+      "modified": 1741445317000,
       "created": 1709939048000,
-      "url": "{{ _.base_url }}/api/teams",
+      "url": "{{ _.base_url }}/api/v1/teams",
       "name": "Créer une équipe",
       "description": "Créer une nouvelle équipe",
       "method": "POST",
@@ -176,9 +208,9 @@
     {
       "_id": "req_get_teams",
       "parentId": "fld_teams",
-      "modified": 1709939048000,
+      "modified": 1741445317000,
       "created": 1709939048000,
-      "url": "{{ _.base_url }}/api/teams",
+      "url": "{{ _.base_url }}/api/v1/teams",
       "name": "Liste des équipes",
       "description": "Obtenir la liste des équipes de l'utilisateur",
       "method": "GET",
@@ -195,9 +227,9 @@
     {
       "_id": "req_get_team",
       "parentId": "fld_teams",
-      "modified": 1709939048000,
+      "modified": 1741445317000,
       "created": 1709939048000,
-      "url": "{{ _.base_url }}/api/teams/{{ _.team_id }}",
+      "url": "{{ _.base_url }}/api/v1/teams/{{ _.team_id }}",
       "name": "Détails d'une équipe",
       "description": "Obtenir les détails d'une équipe spécifique",
       "method": "GET",
@@ -214,9 +246,9 @@
     {
       "_id": "req_join_team",
       "parentId": "fld_teams",
-      "modified": 1709939048000,
+      "modified": 1741445317000,
       "created": 1709939048000,
-      "url": "{{ _.base_url }}/api/teams/join",
+      "url": "{{ _.base_url }}/api/v1/teams/join",
       "name": "Rejoindre une équipe",
       "description": "Rejoindre une équipe avec un code d'invitation",
       "method": "POST",
@@ -241,15 +273,15 @@
     {
       "_id": "req_create_challenge",
       "parentId": "fld_challenges",
-      "modified": 1709939048000,
+      "modified": 1741445317000,
       "created": 1709939048000,
-      "url": "{{ _.base_url }}/api/challenges",
+      "url": "{{ _.base_url }}/api/v1/challenges",
       "name": "Créer un challenge",
       "description": "Créer un nouveau challenge pour une équipe",
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n\t\"name\": \"Challenge Web\",\n\t\"description\": \"Un challenge de sécurité web\",\n\t\"category\": \"web\",\n\t\"difficulty\": \"MEDIUM\",\n\t\"points\": 100,\n\t\"teamId\": \"{{ _.team_id }}\",\n\t\"flag\": \"flag{test_flag}\"\n}"
+        "text": "{\n\t\"name\": \"Challenge Web\",\n\t\"description\": \"Un challenge de sécurité web\",\n\t\"category\": \"web\",\n\t\"points\": 100,\n\t\"teamId\": \"{{ _.team_id }}\",\n\t\"flag\": \"flag{test_flag}\"\n}"
       },
       "parameters": [],
       "headers": [
@@ -279,9 +311,9 @@
     {
       "_id": "req_get_team_challenges",
       "parentId": "fld_challenges",
-      "modified": 1709939048000,
+      "modified": 1741445317000,
       "created": 1709939048000,
-      "url": "{{ _.base_url }}/api/challenges/team/{{ _.team_id }}",
+      "url": "{{ _.base_url }}/api/v1/challenges/team/{{ _.team_id }}",
       "name": "Challenges d'une équipe",
       "description": "Obtenir la liste des challenges d'une équipe",
       "method": "GET",
@@ -298,9 +330,9 @@
     {
       "_id": "req_get_challenge",
       "parentId": "fld_challenges",
-      "modified": 1709939048000,
+      "modified": 1741445317000,
       "created": 1709939048000,
-      "url": "{{ _.base_url }}/api/challenges/{{ _.challenge_id }}",
+      "url": "{{ _.base_url }}/api/v1/challenges/{{ _.challenge_id }}",
       "name": "Détails d'un challenge",
       "description": "Obtenir les détails d'un challenge spécifique",
       "method": "GET",
@@ -317,9 +349,9 @@
     {
       "_id": "req_solve_challenge",
       "parentId": "fld_challenges",
-      "modified": 1709939048000,
+      "modified": 1741445317000,
       "created": 1709939048000,
-      "url": "{{ _.base_url }}/api/challenges/{{ _.challenge_id }}/solve",
+      "url": "{{ _.base_url }}/api/v1/challenges/{{ _.challenge_id }}/solve",
       "name": "Résoudre un challenge",
       "description": "Soumettre un flag pour résoudre un challenge",
       "method": "POST",
@@ -342,11 +374,30 @@
       "_type": "request"
     },
     {
-      "_id": "req_add_note",
+      "_id": "req_assign_challenge",
       "parentId": "fld_challenges",
-      "modified": 1709939048000,
+      "modified": 1741445317000,
+      "created": 1741445317000,
+      "url": "{{ _.base_url }}/api/v1/challenges/{{ _.challenge_id }}/assign",
+      "name": "S'assigner à un challenge",
+      "description": "S'assigner à un challenge spécifique",
+      "method": "POST",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.auth_token }}"
+      },
+      "metaSortKey": -1709939047650,
+      "_type": "request"
+    },
+    {
+      "_id": "req_add_note",
+      "parentId": "fld_notes",
+      "modified": 1741445317000,
       "created": 1709939048000,
-      "url": "{{ _.base_url }}/api/challenges/{{ _.challenge_id }}/notes",
+      "url": "{{ _.base_url }}/api/v1/notes/{{ _.challenge_id }}",
       "name": "Ajouter une note",
       "description": "Ajouter une note à un challenge",
       "method": "POST",
@@ -369,13 +420,24 @@
       "_type": "request"
     },
     {
+      "_id": "fld_notes",
+      "parentId": "wrk_flaghive",
+      "modified": 1741445317000,
+      "created": 1741445317000,
+      "name": "Notes",
+      "description": "Endpoints pour la gestion des notes",
+      "environment": {},
+      "metaSortKey": -1709939047650,
+      "_type": "request_group"
+    },
+    {
       "_id": "env",
       "parentId": "wrk_flaghive",
-      "modified": 1709939048000,
+      "modified": 1741445317000,
       "created": 1709939048000,
       "name": "Base Environment",
       "data": {
-        "base_url": "http://localhost:3001",
+        "base_url": "http://localhost:3000",
         "auth_token": "",
         "team_id": "",
         "challenge_id": ""
@@ -391,11 +453,11 @@
     {
       "_id": "env_dev",
       "parentId": "env",
-      "modified": 1709939048000,
+      "modified": 1741445317000,
       "created": 1709939048000,
       "name": "Développement",
       "data": {
-        "base_url": "http://localhost:3001"
+        "base_url": "http://localhost:3000"
       },
       "dataPropertyOrder": {
         "&": ["base_url"]
@@ -408,7 +470,7 @@
     {
       "_id": "env_prod",
       "parentId": "env",
-      "modified": 1709939048000,
+      "modified": 1741445317000,
       "created": 1709939048000,
       "name": "Production",
       "data": {

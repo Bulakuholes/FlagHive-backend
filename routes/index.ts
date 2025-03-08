@@ -39,6 +39,20 @@ export const registerRoutes = (app: Express): void => {
           );
         }
       }
+    } else if (item !== "index.ts" && item.endsWith(".ts")) {
+      // Pour les fichiers .ts à la racine (comme swagger.ts)
+      try {
+        const route = require(`./${item}`);
+        if (typeof route.register === "function") {
+          route.register(app);
+          console.log(`Routes chargées depuis ${item}`);
+        }
+      } catch (error) {
+        console.error(
+          `Erreur lors du chargement des routes depuis ${item}:`,
+          error
+        );
+      }
     }
   });
 

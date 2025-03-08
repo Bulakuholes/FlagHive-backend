@@ -3,6 +3,7 @@ import express from "express";
 import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
 import config from "./config/config";
+import { csrfTokenMiddleware } from "./middleware/csrf";
 import { registerRoutes } from "./routes";
 
 const app = express();
@@ -13,6 +14,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use(helmet());
+
+// Configuration du middleware CSRF
+app.use(csrfTokenMiddleware);
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes

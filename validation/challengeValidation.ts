@@ -101,10 +101,19 @@ export type UpdateChallengeInput = z.infer<
  */
 export const solveChallengeSchema = z.object({
   params: z.object({
-    id: z.string().uuid("L'ID du challenge doit être un UUID valide"),
+    challengeId: z.string().uuid("L'ID du challenge doit être un UUID valide"),
   }),
   body: z.object({
     flag: z.string().min(1, "Le flag est requis"),
+  }),
+});
+
+/**
+ * Schéma de validation pour l'assignation à un challenge
+ */
+export const assignChallengeSchema = z.object({
+  params: z.object({
+    challengeId: z.string().uuid("L'ID du challenge doit être un UUID valide"),
   }),
 });
 
@@ -113,7 +122,7 @@ export const solveChallengeSchema = z.object({
  */
 export const addNoteSchema = z.object({
   params: z.object({
-    id: z.string().uuid("L'ID du challenge doit être un UUID valide"),
+    challengeId: z.string().uuid("L'ID du challenge doit être un UUID valide"),
   }),
   body: z.object({
     content: z
