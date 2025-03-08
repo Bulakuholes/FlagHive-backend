@@ -8,20 +8,25 @@ const router = express.Router();
  * @swagger
  * /v1/csrf/token:
  *   get:
- *     summary: Génère un token CSRF
- *     description: Génère un nouveau token CSRF pour protéger les formulaires contre les attaques CSRF
+ *     summary: Récupérer un token CSRF
+ *     description: Récupère un token CSRF pour sécuriser les formulaires
  *     tags: [CSRF]
  *     responses:
  *       200:
- *         description: Token CSRF généré avec succès
+ *         description: Token CSRF récupéré avec succès
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 csrfToken:
- *                   type: string
- *                   example: abcdef123456
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         csrfToken:
+ *                           type: string
+ *                           description: Token CSRF à inclure dans les requêtes
  *       500:
  *         description: Erreur lors de la génération du token CSRF
  */

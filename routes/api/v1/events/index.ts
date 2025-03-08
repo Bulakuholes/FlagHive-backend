@@ -30,28 +30,37 @@ const router = express.Router();
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 events:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                         format: uuid
- *                       name:
- *                         type: string
- *                       description:
- *                         type: string
- *                       startDate:
- *                         type: string
- *                         format: date-time
- *                       endDate:
- *                         type: string
- *                         format: date-time
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         events:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               id:
+ *                                 type: string
+ *                                 format: uuid
+ *                               name:
+ *                                 type: string
+ *                               description:
+ *                                 type: string
+ *                               startDate:
+ *                                 type: string
+ *                                 format: date-time
+ *                               endDate:
+ *                                 type: string
+ *                                 format: date-time
  *       401:
  *         description: Non authentifié
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get("/", authenticateJWT, async (req: Request, res: Response) => {
   try {
@@ -128,25 +137,45 @@ router.get("/", authenticateJWT, async (req: Request, res: Response) => {
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Événement créé avec succès
- *                 event:
- *                   type: object
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
  *                   properties:
- *                     id:
- *                       type: string
- *                       format: uuid
- *                     name:
- *                       type: string
- *                     description:
- *                       type: string
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         event:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: string
+ *                               format: uuid
+ *                             name:
+ *                               type: string
+ *                             description:
+ *                               type: string
+ *                             startDate:
+ *                               type: string
+ *                               format: date-time
+ *                             endDate:
+ *                               type: string
+ *                               format: date-time
+ *                             website:
+ *                               type: string
+ *                             ctfdUrl:
+ *                               type: string
  *       400:
  *         description: Données d'entrée invalides
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       401:
  *         description: Non authentifié
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post(
   "/",
@@ -221,30 +250,51 @@ router.post(
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 event:
- *                   type: object
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
  *                   properties:
- *                     id:
- *                       type: string
- *                       format: uuid
- *                     name:
- *                       type: string
- *                     description:
- *                       type: string
- *                     startDate:
- *                       type: string
- *                       format: date-time
- *                     endDate:
- *                       type: string
- *                       format: date-time
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         event:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: string
+ *                               format: uuid
+ *                             name:
+ *                               type: string
+ *                             description:
+ *                               type: string
+ *                             startDate:
+ *                               type: string
+ *                               format: date-time
+ *                             endDate:
+ *                               type: string
+ *                               format: date-time
+ *                             website:
+ *                               type: string
+ *                             ctfdUrl:
+ *                               type: string
  *       401:
  *         description: Non authentifié
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       403:
  *         description: Non autorisé à accéder à cet événement
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       404:
  *         description: Événement non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
   "/:eventId",

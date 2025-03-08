@@ -20,8 +20,8 @@ const router = express.Router({ mergeParams: true });
  * @swagger
  * /api/v1/events/{eventId}/challenges/{challengeId}/notes:
  *   get:
- *     summary: Notes d'un challenge
- *     description: Récupère toutes les notes associées à un challenge spécifique
+ *     summary: Liste des notes d'un challenge
+ *     description: Récupère la liste des notes associées à un challenge spécifique
  *     tags: [Notes]
  *     security:
  *       - bearerAuth: []
@@ -46,38 +46,58 @@ const router = express.Router({ mergeParams: true });
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 notes:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                         format: uuid
- *                       content:
- *                         type: string
- *                       createdAt:
- *                         type: string
- *                         format: date-time
- *                       updatedAt:
- *                         type: string
- *                         format: date-time
- *                       user:
- *                         type: object
- *                         properties:
- *                           id:
- *                             type: string
- *                             format: uuid
- *                           username:
- *                             type: string
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         notes:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               id:
+ *                                 type: string
+ *                                 format: uuid
+ *                               content:
+ *                                 type: string
+ *                               createdAt:
+ *                                 type: string
+ *                                 format: date-time
+ *                               updatedAt:
+ *                                 type: string
+ *                                 format: date-time
+ *                               userId:
+ *                                 type: string
+ *                                 format: uuid
+ *                               user:
+ *                                 type: object
+ *                                 properties:
+ *                                   id:
+ *                                     type: string
+ *                                     format: uuid
+ *                                   username:
+ *                                     type: string
  *       401:
  *         description: Non authentifié
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       403:
- *         description: Non autorisé à accéder aux notes de ce challenge
+ *         description: Non autorisé à accéder à ce challenge
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       404:
- *         description: Challenge non trouvé
+ *         description: Événement ou challenge non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get("/", authenticateJWT, async (req: Request, res: Response) => {
   try {
@@ -116,8 +136,8 @@ router.get("/", authenticateJWT, async (req: Request, res: Response) => {
  * @swagger
  * /api/v1/events/{eventId}/challenges/{challengeId}/notes:
  *   post:
- *     summary: Ajouter une note
- *     description: Ajoute une nouvelle note à un challenge
+ *     summary: Créer une note pour un challenge
+ *     description: Crée une nouvelle note associée à un challenge spécifique
  *     tags: [Notes]
  *     security:
  *       - bearerAuth: []
@@ -148,37 +168,60 @@ router.get("/", authenticateJWT, async (req: Request, res: Response) => {
  *               content:
  *                 type: string
  *                 description: Contenu de la note
- *                 example: Voici une piste pour résoudre ce challenge...
  *     responses:
  *       201:
- *         description: Note ajoutée avec succès
+ *         description: Note créée avec succès
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Note ajoutée avec succès
- *                 note:
- *                   type: object
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
  *                   properties:
- *                     id:
- *                       type: string
- *                       format: uuid
- *                     content:
- *                       type: string
- *                     createdAt:
- *                       type: string
- *                       format: date-time
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         note:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: string
+ *                               format: uuid
+ *                             content:
+ *                               type: string
+ *                             createdAt:
+ *                               type: string
+ *                               format: date-time
+ *                             updatedAt:
+ *                               type: string
+ *                               format: date-time
+ *                             userId:
+ *                               type: string
+ *                               format: uuid
  *       400:
  *         description: Données d'entrée invalides
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       401:
  *         description: Non authentifié
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       403:
- *         description: Non autorisé à ajouter une note à ce challenge
+ *         description: Non autorisé à accéder à ce challenge
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       404:
- *         description: Challenge non trouvé
+ *         description: Événement ou challenge non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post(
   "/",
