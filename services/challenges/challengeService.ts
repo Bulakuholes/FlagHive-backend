@@ -1,4 +1,5 @@
 import { prisma } from "../../prisma/client";
+import { createFlagAttempt } from "../flagAttempts/flagAttemptService";
 
 /**
  * Crée un nouveau challenge
@@ -374,7 +375,18 @@ export const solveChallenge = async (
   }
 
   // Vérifier le flag
-  if (challenge.flag !== flag) {
+  const isSuccess = challenge.flag === flag;
+  
+  // Enregistrer la tentative de flag
+  await createFlagAttempt(
+    flag,
+    isSuccess,
+    isSuccess ? "Tentative réussie" : "Tentative échouée",
+    userId,
+    challengeId
+  );
+
+  if (!isSuccess) {
     return { solved: false };
   }
 

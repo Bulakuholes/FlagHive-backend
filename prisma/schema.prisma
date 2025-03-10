@@ -31,6 +31,7 @@ model User {
   messages           Message[]
   notes              Note[]
   uploads            Upload[]
+  flagAttempts       FlagAttempt[]         @relation("UserFlagAttempts")
 }
 
 enum UserRole {
@@ -135,6 +136,7 @@ model Challenge {
   notes       Note[]                @relation("ChallengeNotes")
   messages    Message[]             @relation("ChallengeMessages")
   uploads     Upload[]              @relation("ChallengeUploads")
+  flagAttempts FlagAttempt[]        @relation("ChallengeFlagAttempts")
 
   @@unique([externalId, eventId, teamId])
   @@unique([name, teamId, eventId])
@@ -240,4 +242,22 @@ model Request {
 
   // Relations
   endpoint Endpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+}
+
+// Tentatives de flag pour les challenges
+model FlagAttempt {
+  id          String   @id @default(uuid())
+  flagValue   String
+  isSuccess   Boolean  @default(false)
+  comment     String?
+  userId      String
+  challengeId String
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user      User      @relation("UserFlagAttempts", fields: [userId], references: [id], onDelete: Cascade)
+  challenge Challenge @relation("ChallengeFlagAttempts", fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@index([challengeId])
+  @@index([userId])
 }

@@ -15,6 +15,7 @@ import {
   createChallengeSchema,
   solveChallengeSchema,
 } from "../../../../../validation/challengeValidation";
+import flagAttemptRoutes from "./flagAttempts";
 
 const router = express.Router({ mergeParams: true });
 
@@ -667,5 +668,8 @@ router.post(
     }
   }
 );
+
+// Monter les routes des tentatives de flag
+router.use("/:challengeId/flagAttempts", flagAttemptRoutes);
 
 export default router;
