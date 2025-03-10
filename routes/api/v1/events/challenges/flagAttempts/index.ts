@@ -85,43 +85,43 @@ const router = express.Router({ mergeParams: true });
  *         description: Challenge non trouvé
  */
 router.get("/", authenticateJWT, async (req: Request, res: Response) => {
-  try {
-    const { challengeId } = req.params;
-    const userId = req.user?.userId;
+  const { challengeId } = req.params;
+  const userId = req.user?.userId;
 
-    if (!userId) {
-      return sendError(
-        res,
-        "Utilisateur non authentifié",
-        401,
-        "NOT_AUTHENTICATED"
-      );
-    }
-
-    const flagAttempts = await getFlagAttemptsByChallenge(challengeId, userId);
-
-    return sendSuccess(
-      res,
-      "Tentatives de flag récupérées avec succès",
-      flagAttempts
-    );
-  } catch (error) {
-    console.error("Erreur lors de la récupération des tentatives de flag:", error);
-    if (error instanceof Error) {
-      if (error.message === "Challenge non trouvé") {
-        return sendError(res, error.message, 404, "RESOURCE_NOT_FOUND");
-      }
-      if (error.message === "Non autorisé à voir les tentatives pour ce challenge") {
-        return sendError(res, error.message, 403, "FORBIDDEN_ACTION");
-      }
-    }
+  if (!userId) {
     return sendError(
       res,
-      "Erreur lors de la récupération des tentatives de flag",
-      500,
-      "SERVER_ERROR"
+      "Utilisateur non authentifié",
+      401,
+      "NOT_AUTHENTICATED"
     );
   }
+
+  const result = await getFlagAttemptsByChallenge(challengeId, userId);
+
+  if (!result.success) {
+    // Déterminer le code de statut HTTP approprié en fonction du code d'erreur
+    let statusCode = 500;
+    if (result.error?.code === "NOT_FOUND") {
+      statusCode = 404;
+    } else if (result.error?.code === "UNAUTHORIZED") {
+      statusCode = 403;
+    }
+
+    return sendError(
+      res,
+      result.message,
+      statusCode,
+      result.error?.code,
+      result.error?.details
+    );
+  }
+
+  return sendSuccess(
+    res,
+    result.message,
+    result.data
+  );
 });
 
 /**
@@ -202,43 +202,43 @@ router.get("/", authenticateJWT, async (req: Request, res: Response) => {
  *         description: Tentative de flag non trouvée
  */
 router.get("/:flagAttemptId", authenticateJWT, async (req: Request, res: Response) => {
-  try {
-    const { flagAttemptId } = req.params;
-    const userId = req.user?.userId;
+  const { flagAttemptId } = req.params;
+  const userId = req.user?.userId;
 
-    if (!userId) {
-      return sendError(
-        res,
-        "Utilisateur non authentifié",
-        401,
-        "NOT_AUTHENTICATED"
-      );
-    }
-
-    const flagAttempt = await getFlagAttemptById(flagAttemptId, userId);
-
-    return sendSuccess(
-      res,
-      "Tentative de flag récupérée avec succès",
-      flagAttempt
-    );
-  } catch (error) {
-    console.error("Erreur lors de la récupération de la tentative de flag:", error);
-    if (error instanceof Error) {
-      if (error.message === "Tentative de flag non trouvée") {
-        return sendError(res, error.message, 404, "RESOURCE_NOT_FOUND");
-      }
-      if (error.message === "Non autorisé à voir cette tentative") {
-        return sendError(res, error.message, 403, "FORBIDDEN_ACTION");
-      }
-    }
+  if (!userId) {
     return sendError(
       res,
-      "Erreur lors de la récupération de la tentative de flag",
-      500,
-      "SERVER_ERROR"
+      "Utilisateur non authentifié",
+      401,
+      "NOT_AUTHENTICATED"
     );
   }
+
+  const result = await getFlagAttemptById(flagAttemptId, userId);
+
+  if (!result.success) {
+    // Déterminer le code de statut HTTP approprié en fonction du code d'erreur
+    let statusCode = 500;
+    if (result.error?.code === "NOT_FOUND") {
+      statusCode = 404;
+    } else if (result.error?.code === "UNAUTHORIZED") {
+      statusCode = 403;
+    }
+
+    return sendError(
+      res,
+      result.message,
+      statusCode,
+      result.error?.code,
+      result.error?.details
+    );
+  }
+
+  return sendSuccess(
+    res,
+    result.message,
+    result.data
+  );
 });
 
 /**
@@ -283,8 +283,7 @@ router.get("/:flagAttemptId", authenticateJWT, async (req: Request, res: Respons
  *             properties:
  *               comment:
  *                 type: string
- *                 description: Commentaire à ajouter
- *                 example: Ce flag était un leurre
+ *                 description: Commentaire à ajouter à la tentative
  *     responses:
  *       200:
  *         description: Commentaire ajouté avec succès
@@ -326,48 +325,48 @@ router.post(
   authenticateJWT,
   validate(addCommentSchema),
   async (req: Request, res: Response) => {
-    try {
-      const { flagAttemptId } = req.params;
-      const { comment } = req.body;
-      const userId = req.user?.userId;
+    const { flagAttemptId } = req.params;
+    const { comment } = req.body;
+    const userId = req.user?.userId;
 
-      if (!userId) {
-        return sendError(
-          res,
-          "Utilisateur non authentifié",
-          401,
-          "NOT_AUTHENTICATED"
-        );
-      }
-
-      const updatedFlagAttempt = await addCommentToFlagAttempt(
-        flagAttemptId,
-        comment,
-        userId
-      );
-
-      return sendSuccess(
-        res,
-        "Commentaire ajouté avec succès",
-        updatedFlagAttempt
-      );
-    } catch (error) {
-      console.error("Erreur lors de l'ajout du commentaire:", error);
-      if (error instanceof Error) {
-        if (error.message === "Tentative de flag non trouvée") {
-          return sendError(res, error.message, 404, "RESOURCE_NOT_FOUND");
-        }
-        if (error.message === "Non autorisé à modifier cette tentative") {
-          return sendError(res, error.message, 403, "FORBIDDEN_ACTION");
-        }
-      }
+    if (!userId) {
       return sendError(
         res,
-        "Erreur lors de l'ajout du commentaire",
-        500,
-        "SERVER_ERROR"
+        "Utilisateur non authentifié",
+        401,
+        "NOT_AUTHENTICATED"
       );
     }
+
+    const result = await addCommentToFlagAttempt(
+      flagAttemptId,
+      comment,
+      userId
+    );
+
+    if (!result.success) {
+      // Déterminer le code de statut HTTP approprié en fonction du code d'erreur
+      let statusCode = 500;
+      if (result.error?.code === "NOT_FOUND") {
+        statusCode = 404;
+      } else if (result.error?.code === "UNAUTHORIZED") {
+        statusCode = 403;
+      }
+
+      return sendError(
+        res,
+        result.message,
+        statusCode,
+        result.error?.code,
+        result.error?.details
+      );
+    }
+
+    return sendSuccess(
+      res,
+      result.message,
+      result.data
+    );
   }
 );
 
