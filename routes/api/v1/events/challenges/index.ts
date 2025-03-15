@@ -16,6 +16,7 @@ import {
   solveChallengeSchema,
 } from "../../../../../validation/challengeValidation";
 import flagAttemptRoutes from "./flagAttempts";
+import { info, warn, error, logError } from "../../../../../utils/logger";
 
 const router = express.Router({ mergeParams: true });
 
@@ -150,7 +151,10 @@ router.post(
 
       return sendSuccess(res, "Challenge créé avec succès", { challenge }, 201);
     } catch (error) {
-      console.error("Erreur lors de la création du challenge:", error);
+      logError(
+        error instanceof Error ? error : new Error(String(error)),
+        "Erreur lors de la création du challenge"
+      );
       if (error instanceof Error) {
         if (
           error.message === "Événement non trouvé" ||
@@ -258,7 +262,10 @@ router.get("/", authenticateJWT, async (req: Request, res: Response) => {
       challenges,
     });
   } catch (error) {
-    console.error("Erreur lors de la récupération des challenges:", error);
+    logError(
+      error instanceof Error ? error : new Error(String(error)),
+      "Erreur lors de la récupération des challenges"
+    );
     if (error instanceof Error) {
       if (error.message === "Événement non trouvé") {
         return sendError(res, error.message, 404, "EVENT_NOT_FOUND");
@@ -378,7 +385,10 @@ router.get(
         challenge,
       });
     } catch (error) {
-      console.error("Erreur lors de la récupération du challenge:", error);
+      logError(
+        error instanceof Error ? error : new Error(String(error)),
+        "Erreur lors de la récupération du challenge"
+      );
       if (error instanceof Error) {
         if (
           error.message === "Challenge non trouvé" ||
@@ -505,7 +515,10 @@ router.post(
         points: result.points,
       });
     } catch (error) {
-      console.error("Erreur lors de la résolution du challenge:", error);
+      logError(
+        error instanceof Error ? error : new Error(String(error)),
+        "Erreur lors de la résolution du challenge"
+      );
       if (error instanceof Error) {
         if (
           error.message === "Challenge non trouvé" ||
@@ -640,7 +653,10 @@ router.post(
         assignment,
       });
     } catch (error) {
-      console.error("Erreur lors de l'assignation de l'utilisateur:", error);
+      logError(
+        error instanceof Error ? error : new Error(String(error)),
+        "Erreur lors de l'assignation de l'utilisateur"
+      );
       if (error instanceof Error) {
         if (
           error.message === "Challenge non trouvé" ||

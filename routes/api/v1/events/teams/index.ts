@@ -5,6 +5,7 @@ import { validate } from "../../../../../middlewares/validationMiddleware";
 import { createTeamForEvent } from "../../../../../services/teams/teamService";
 import { sendError, sendSuccess } from "../../../../../utils/responseHandler";
 import { createTeamSchema } from "../../../../../validation/teamValidation";
+import { info, warn, error, logError } from "../../../../../utils/logger";
 
 const router = express.Router({ mergeParams: true });
 
@@ -112,7 +113,10 @@ router.post(
         201
       );
     } catch (error) {
-      console.error("Erreur lors de la création de l'équipe:", error);
+      logError(
+        error instanceof Error ? error : new Error(String(error)),
+        "Erreur lors de la création de l'équipe"
+      );
       if (error instanceof Error) {
         if (error.message === "Événement non trouvé") {
           return sendError(res, error.message, 404, "RESOURCE_NOT_FOUND");
@@ -188,7 +192,10 @@ router.get("/", authenticateJWT, async (req: Request, res: Response) => {
       teams: [],
     });
   } catch (error) {
-    console.error("Erreur lors de la récupération des équipes:", error);
+    logError(
+      error instanceof Error ? error : new Error(String(error)),
+      "Erreur lors de la récupération des équipes"
+    );
     return sendError(
       res,
       "Erreur lors de la récupération des équipes",

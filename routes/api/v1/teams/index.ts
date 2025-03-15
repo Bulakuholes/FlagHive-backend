@@ -9,6 +9,7 @@ import {
 } from "../../../../services/teams/teamService";
 import { sendError, sendSuccess } from "../../../../utils/responseHandler";
 import { joinTeamSchema } from "../../../../validation/teamValidation";
+import { info, warn, error, logError } from "../../../../utils/logger";
 
 // Create router instance
 const router = express.Router();
@@ -81,7 +82,10 @@ router.get("/", authenticateJWT, async (req: Request, res: Response) => {
       teams,
     });
   } catch (error) {
-    console.error("Erreur lors de la récupération des équipes:", error);
+    logError(
+      error instanceof Error ? error : new Error(String(error)),
+      "Erreur lors de la récupération des équipes"
+    );
     return sendError(
       res,
       "Erreur lors de la récupération des équipes",
@@ -184,7 +188,10 @@ router.get("/:teamId", authenticateJWT, async (req: Request, res: Response) => {
       team,
     });
   } catch (error) {
-    console.error("Erreur lors de la récupération de l'équipe:", error);
+    logError(
+      error instanceof Error ? error : new Error(String(error)),
+      "Erreur lors de la récupération de l'équipe"
+    );
     if (error instanceof Error) {
       if (error.message === "Accès non autorisé à cette équipe") {
         return sendError(res, error.message, 403, "FORBIDDEN_ACCESS");

@@ -7,7 +7,10 @@ import {
   getFlagAttemptById,
   getFlagAttemptsByChallenge,
 } from "../../../../../../services/flagAttempts/flagAttemptService";
-import { sendError, sendSuccess } from "../../../../../../utils/responseHandler";
+import {
+  sendError,
+  sendSuccess,
+} from "../../../../../../utils/responseHandler";
 import { addCommentSchema } from "../../../../../../validation/flagAttemptValidation";
 
 const router = express.Router({ mergeParams: true });
@@ -117,11 +120,7 @@ router.get("/", authenticateJWT, async (req: Request, res: Response) => {
     );
   }
 
-  return sendSuccess(
-    res,
-    result.message,
-    result.data
-  );
+  return sendSuccess(res, result.message, result.data);
 });
 
 /**
@@ -201,45 +200,45 @@ router.get("/", authenticateJWT, async (req: Request, res: Response) => {
  *       404:
  *         description: Tentative de flag non trouvée
  */
-router.get("/:flagAttemptId", authenticateJWT, async (req: Request, res: Response) => {
-  const { flagAttemptId } = req.params;
-  const userId = req.user?.userId;
+router.get(
+  "/:flagAttemptId",
+  authenticateJWT,
+  async (req: Request, res: Response) => {
+    const { flagAttemptId } = req.params;
+    const userId = req.user?.userId;
 
-  if (!userId) {
-    return sendError(
-      res,
-      "Utilisateur non authentifié",
-      401,
-      "NOT_AUTHENTICATED"
-    );
-  }
-
-  const result = await getFlagAttemptById(flagAttemptId, userId);
-
-  if (!result.success) {
-    // Déterminer le code de statut HTTP approprié en fonction du code d'erreur
-    let statusCode = 500;
-    if (result.error?.code === "NOT_FOUND") {
-      statusCode = 404;
-    } else if (result.error?.code === "UNAUTHORIZED") {
-      statusCode = 403;
+    if (!userId) {
+      return sendError(
+        res,
+        "Utilisateur non authentifié",
+        401,
+        "NOT_AUTHENTICATED"
+      );
     }
 
-    return sendError(
-      res,
-      result.message,
-      statusCode,
-      result.error?.code,
-      result.error?.details
-    );
-  }
+    const result = await getFlagAttemptById(flagAttemptId, userId);
 
-  return sendSuccess(
-    res,
-    result.message,
-    result.data
-  );
-});
+    if (!result.success) {
+      // Déterminer le code de statut HTTP approprié en fonction du code d'erreur
+      let statusCode = 500;
+      if (result.error?.code === "NOT_FOUND") {
+        statusCode = 404;
+      } else if (result.error?.code === "UNAUTHORIZED") {
+        statusCode = 403;
+      }
+
+      return sendError(
+        res,
+        result.message,
+        statusCode,
+        result.error?.code,
+        result.error?.details
+      );
+    }
+
+    return sendSuccess(res, result.message, result.data);
+  }
+);
 
 /**
  * @swagger
@@ -362,11 +361,7 @@ router.post(
       );
     }
 
-    return sendSuccess(
-      res,
-      result.message,
-      result.data
-    );
+    return sendSuccess(res, result.message, result.data);
   }
 );
 

@@ -12,6 +12,7 @@ import {
   findUserByEmail,
   findUserByUsername,
 } from "../../../../services/userService";
+import { logError } from "../../../../utils/logger";
 import { sendError, sendSuccess } from "../../../../utils/responseHandler";
 import {
   loginSchema,
@@ -132,7 +133,10 @@ router.post(
         201
       );
     } catch (error) {
-      console.error("Erreur lors de l'inscription:", error);
+      logError(
+        error instanceof Error ? error : new Error(String(error)),
+        "Erreur lors de l'inscription"
+      );
       return sendError(
         res,
         "Erreur lors de la création de l'utilisateur",
@@ -238,7 +242,10 @@ router.post(
 
       return sendSuccess(res, "Connexion réussie", { user, token });
     } catch (error) {
-      console.error("Erreur lors de la connexion:", error);
+      logError(
+        error instanceof Error ? error : new Error(String(error)),
+        "Erreur lors de la connexion"
+      );
       return sendError(
         res,
         "Erreur lors de l'authentification",
@@ -312,7 +319,10 @@ router.get("/me", authenticateJWT, async (req: Request, res: Response) => {
 
     return sendSuccess(res, "Profil récupéré avec succès", { user });
   } catch (error) {
-    console.error("Erreur lors de la récupération du profil:", error);
+    logError(
+      error instanceof Error ? error : new Error(String(error)),
+      "Erreur lors de la récupération du profil"
+    );
     return sendError(
       res,
       "Erreur lors de la récupération du profil",

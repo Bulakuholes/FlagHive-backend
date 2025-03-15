@@ -12,6 +12,7 @@ import { createEventSchema } from "../../../../validation/eventValidation";
 import challengesRoutes from "./challenges";
 import challengeNotesRoutes from "./challenges/notes";
 import teamsRoutes from "./teams";
+import { info, warn, error, logError } from "../../../../utils/logger";
 
 const router = express.Router();
 
@@ -76,7 +77,10 @@ router.get("/", authenticateJWT, async (req: Request, res: Response) => {
       events,
     });
   } catch (error) {
-    console.error("Erreur lors de la récupération des événements:", error);
+    logError(
+      error instanceof Error ? error : new Error(String(error)),
+      "Erreur lors de la récupération des événements"
+    );
     return sendError(
       res,
       "Erreur lors de la récupération des événements",
@@ -216,7 +220,10 @@ router.post(
 
       return sendSuccess(res, "Événement créé avec succès", { event }, 201);
     } catch (error) {
-      console.error("Erreur lors de la création de l'événement:", error);
+      logError(
+        error instanceof Error ? error : new Error(String(error)),
+        "Erreur lors de la création de l'événement"
+      );
       return sendError(
         res,
         "Erreur lors de la création de l'événement",
@@ -319,7 +326,10 @@ router.get(
         event,
       });
     } catch (error) {
-      console.error("Erreur lors de la récupération de l'événement:", error);
+      logError(
+        error instanceof Error ? error : new Error(String(error)),
+        "Erreur lors de la récupération de l'événement"
+      );
       if (error instanceof Error) {
         if (error.message === "Événement non trouvé") {
           return sendError(res, error.message, 404, "RESOURCE_NOT_FOUND");

@@ -8,6 +8,7 @@ import {
   getNotesByChallengeId,
   updateNoteById,
 } from "../../../../../../services/notes/noteService";
+import { logError } from "../../../../../../utils/logger";
 import {
   sendError,
   sendSuccess,
@@ -112,7 +113,10 @@ router.get("/", authenticateJWT, async (req: Request, res: Response) => {
 
     return sendSuccess(res, "Notes récupérées avec succès", { notes });
   } catch (error) {
-    console.error("Erreur lors de la récupération des notes:", error);
+    logError(
+      error instanceof Error ? error : new Error(String(error)),
+      "Erreur lors de la récupération des notes"
+    );
     if (error instanceof Error) {
       if (error.message === "Challenge non trouvé") {
         return sendError(res, error.message, 404, "RESOURCE_NOT_FOUND");
@@ -246,7 +250,10 @@ router.post(
 
       return sendSuccess(res, "Note ajoutée avec succès", { note }, 201);
     } catch (error) {
-      console.error("Erreur lors de l'ajout de la note:", error);
+      logError(
+        error instanceof Error ? error : new Error(String(error)),
+        "Erreur lors de l'ajout de la note"
+      );
       if (error instanceof Error) {
         if (error.message === "Challenge non trouvé") {
           return sendError(res, error.message, 404, "RESOURCE_NOT_FOUND");
@@ -356,7 +363,10 @@ router.put("/:noteId", authenticateJWT, async (req: Request, res: Response) => {
 
     return sendSuccess(res, "Note modifiée avec succès", { note });
   } catch (error) {
-    console.error("Erreur lors de la modification de la note:", error);
+    logError(
+      error instanceof Error ? error : new Error(String(error)),
+      "Erreur lors de la modification de la note"
+    );
     if (error instanceof Error) {
       if (error.message === "Note non trouvée") {
         return sendError(res, error.message, 404, "RESOURCE_NOT_FOUND");
@@ -444,7 +454,10 @@ router.delete(
 
       return sendSuccess(res, "Note supprimée avec succès");
     } catch (error) {
-      console.error("Erreur lors de la suppression de la note:", error);
+      logError(
+        error instanceof Error ? error : new Error(String(error)),
+        "Erreur lors de la suppression de la note"
+      );
       if (error instanceof Error) {
         if (error.message === "Note non trouvée") {
           return sendError(res, error.message, 404, "RESOURCE_NOT_FOUND");

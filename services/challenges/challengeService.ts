@@ -376,7 +376,7 @@ export const solveChallenge = async (
 
   // Vérifier le flag
   const isSuccess = challenge.flag === flag;
-  
+
   // Enregistrer la tentative de flag
   await createFlagAttempt(
     flag,
