@@ -130,13 +130,13 @@ model Challenge {
   updatedAt   DateTime  @updatedAt
 
   // Relations
-  event       Event                 @relation("EventChallenges", fields: [eventId], references: [id], onDelete: Cascade)
-  team        Team                  @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  assignments ChallengeAssignment[]
-  notes       Note[]                @relation("ChallengeNotes")
-  messages    Message[]             @relation("ChallengeMessages")
-  uploads     Upload[]              @relation("ChallengeUploads")
-  flagAttempts FlagAttempt[]        @relation("ChallengeFlagAttempts")
+  event        Event                 @relation("EventChallenges", fields: [eventId], references: [id], onDelete: Cascade)
+  team         Team                  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  assignments  ChallengeAssignment[]
+  notes        Note[]                @relation("ChallengeNotes")
+  messages     Message[]             @relation("ChallengeMessages")
+  uploads      Upload[]              @relation("ChallengeUploads")
+  flagAttempts FlagAttempt[]         @relation("ChallengeFlagAttempts")
 
   @@unique([externalId, eventId, teamId])
   @@unique([name, teamId, eventId])
@@ -202,6 +202,7 @@ model Upload {
   userId      String
   teamId      String?
   challengeId String?
+  metadata    Json?
   createdAt   DateTime @default(now())
 
   // Relations

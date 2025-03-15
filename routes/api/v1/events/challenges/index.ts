@@ -9,6 +9,7 @@ import {
   getChallengesByEventId,
   solveChallenge,
 } from "../../../../../services/challenges/challengeService";
+import { logError } from "../../../../../utils/logger";
 import { sendError, sendSuccess } from "../../../../../utils/responseHandler";
 import {
   assignChallengeSchema,
@@ -16,7 +17,7 @@ import {
   solveChallengeSchema,
 } from "../../../../../validation/challengeValidation";
 import flagAttemptRoutes from "./flagAttempts";
-import { info, warn, error, logError } from "../../../../../utils/logger";
+import resourceRoutes from "./resources";
 
 const router = express.Router({ mergeParams: true });
 
@@ -687,5 +688,8 @@ router.post(
 
 // Monter les routes des tentatives de flag
 router.use("/:challengeId/flagAttempts", flagAttemptRoutes);
+
+// Monter les routes des ressources
+router.use("/:challengeId/resources", resourceRoutes);
 
 export default router;
