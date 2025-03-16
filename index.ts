@@ -1,4 +1,5 @@
 import cookieParser from "cookie-parser";
+import cors from "cors";
 import express from "express";
 import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
@@ -11,8 +12,17 @@ import httpLogger from "./utils/logger/httpLogger";
 const app = express();
 const PORT = config.port;
 
-// Middleware de logging HTTP
 app.use(httpLogger);
+
+const corsOptions = {
+  origin: config.corsOrigins,
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+
+info(`Origines CORS autorisées: ${config.corsOrigins.join(", ")}`);
+
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -20,7 +30,6 @@ app.use(cookieParser());
 
 app.use(helmet());
 
-// Configuration du middleware CSRF
 app.use(csrfTokenMiddleware);
 
 const limiter = rateLimit({
