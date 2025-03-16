@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import fs from "fs";
 import path from "path";
+import { info, warn, logError } from "../utils/logger";
 
 /**
  * Charge automatiquement toutes les routes depuis les sous-dossiers
@@ -26,21 +27,33 @@ export const registerRoutes = (app: Express): void => {
           // Si le module exporte une fonction 'register', l'appeler avec l'app Express
           if (typeof route.register === "function") {
             route.register(app);
-            console.log(`Routes chargées depuis ${item}`);
+            info(`Routes chargées depuis ${item}`);
           } else {
-            console.warn(
-              `Le module ${item} n'exporte pas de fonction 'register'`
-            );
+            warn(`Le module ${item} n'exporte pas de fonction 'register'`);
           }
         } catch (error) {
-          console.error(
-            `Erreur lors du chargement des routes depuis ${item}:`,
-            error
+          logError(
+            error instanceof Error ? error : new Error(String(error)),
+            `Chargement des routes depuis ${item}`
           );
         }
+      }
+    } else if (item !== "index.ts" && item.endsWith(".ts")) {
+      // Pour les fichiers .ts à la racine (comme swagger.ts)
+      try {
+        const route = require(`./${item}`);
+        if (typeof route.register === "function") {
+          route.register(app);
+          info(`Routes chargées depuis ${item}`);
+        }
+      } catch (error) {
+        logError(
+          error instanceof Error ? error : new Error(String(error)),
+          `Chargement des routes depuis ${item}`
+        );
       }
     }
   });
 
-  console.log("Toutes les routes ont été enregistrées");
+  info("Toutes les routes ont été enregistrées");
 };

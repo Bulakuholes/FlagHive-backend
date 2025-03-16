@@ -3,16 +3,25 @@ import express from "express";
 import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
 import config from "./config/config";
+import { csrfTokenMiddleware } from "./middleware/csrf";
 import { registerRoutes } from "./routes";
+import { info } from "./utils/logger";
+import httpLogger from "./utils/logger/httpLogger";
 
 const app = express();
 const PORT = config.port;
+
+// Middleware de logging HTTP
+app.use(httpLogger);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use(helmet());
+
+// Configuration du middleware CSRF
+app.use(csrfTokenMiddleware);
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -30,5 +39,5 @@ app.get("/", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Serveur démarré sur http://localhost:${PORT}`);
+  info(`Serveur démarré sur http://localhost:${PORT}`);
 });

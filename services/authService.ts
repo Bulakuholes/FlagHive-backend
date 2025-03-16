@@ -1,5 +1,6 @@
 import type { User } from "@prisma/client";
 import * as jose from "jose";
+import { logError } from "../utils/logger";
 import config from "../config/config";
 import {
   findUserByUsername,
@@ -45,7 +46,10 @@ export const verifyJWT = async (
     const { payload } = await jose.jwtVerify(token, secretKey);
     return payload as JwtPayload;
   } catch (error) {
-    console.error("Erreur de vérification JWT:", error);
+    logError(
+      error instanceof Error ? error : new Error(String(error)),
+      "Erreur de vérification JWT"
+    );
     throw error;
   }
 };
