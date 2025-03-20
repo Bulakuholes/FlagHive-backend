@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { verifyJWT } from "../services/authService";
+import { jwtCookieConfig, verifyJWT } from "../services/authService";
 
 // Étend l'interface Request pour inclure l'utilisateur
 declare global {
@@ -23,16 +23,25 @@ export const authenticateJWT = async (
   res: Response,
   next: NextFunction
 ) => {
+  const token = req.cookies[jwtCookieConfig.name];
+  
+  // Si j'ai pas de token dans le cookie, vérifier l'en-tête Authorization
   const authHeader = req.headers.authorization;
+  let authToken: string | undefined;
+  
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    authToken = authHeader.split(" ")[1];
+  }
+  
+  // cookie ou header
+  const jwtToken = token || authToken;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "Token non fourni" });
+  if (!jwtToken) {
+    return res.status(401).json({ message: "Authentification requise" });
   }
 
-  const token = authHeader.split(" ")[1];
-
   try {
-    const payload = await verifyJWT(token);
+    const payload = await verifyJWT(jwtToken);
     req.user = payload;
     next();
   } catch (error) {

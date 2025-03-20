@@ -7,6 +7,7 @@ import {
   updateLastLogin,
   verifyPassword,
 } from "./userService";
+import type { Response } from "express";
 
 /**
  * Type pour les données utilisateur dans le token JWT
@@ -16,6 +17,20 @@ export type JwtPayload = {
   username: string;
   email: string;
   role: string;
+};
+
+/**
+ * Configuration du cookie JWT
+ */
+export const jwtCookieConfig = {
+  name: "auth_token",
+  options: {
+    httpOnly: true,
+    secure: config.nodeEnv === "production",
+    sameSite: "strict" as const,
+    maxAge: 3600000, // 1 heure en millisecondes
+    path: "/",
+  },
 };
 
 /**
@@ -55,12 +70,32 @@ export const verifyJWT = async (
 };
 
 /**
+ * Définit le token JWT dans un cookie
+ */
+export const setJWTCookie = (res: Response, token: string): void => {
+  res.cookie(jwtCookieConfig.name, token, jwtCookieConfig.options);
+};
+
+/**
+ * Supprime le cookie JWT
+ */
+export const clearJWTCookie = (res: Response): void => {
+  res.clearCookie(jwtCookieConfig.name, {
+    httpOnly: true,
+    secure: config.nodeEnv === "production",
+    sameSite: "strict",
+    path: "/",
+  });
+};
+
+/**
  * Authentifie un utilisateur et génère un token JWT
  */
 export const authenticateUser = async (
   username: string,
-  password: string
-): Promise<{ user: User; token: string } | null> => {
+  password: string,
+  res: Response
+): Promise<{ user: User } | null> => {
   const user = await findUserByUsername(username);
 
   if (!user || !verifyPassword(password, user.hashedPassword)) {
@@ -78,6 +113,8 @@ export const authenticateUser = async (
   };
 
   const token = await generateJWT(payload);
+  
+  setJWTCookie(res, token);
 
-  return { user, token };
+  return { user };
 };

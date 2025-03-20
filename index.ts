@@ -4,7 +4,7 @@ import express from "express";
 import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
 import config from "./config/config";
-import { csrfTokenMiddleware } from "./middleware/csrf";
+import { csrfTokenMiddleware, csrfProtectionMiddleware } from "./middleware/csrf";
 import { registerRoutes } from "./routes";
 import { info } from "./utils/logger";
 import httpLogger from "./utils/logger/httpLogger";
@@ -31,6 +31,13 @@ app.use(cookieParser());
 app.use(helmet());
 
 app.use(csrfTokenMiddleware);
+
+app.use((req, res, next) => {
+  if (!["GET", "HEAD", "OPTIONS"].includes(req.method)) {
+    return csrfProtectionMiddleware(req, res, next);
+  }
+  next();
+});
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
