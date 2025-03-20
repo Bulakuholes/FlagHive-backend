@@ -4,13 +4,18 @@ import express from "express";
 import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
 import config from "./config/config";
-import { csrfTokenMiddleware, csrfProtectionMiddleware } from "./middleware/csrf";
+import {
+  csrfProtectionMiddleware,
+  csrfTokenMiddleware,
+} from "./middleware/csrf";
 import { registerRoutes } from "./routes";
 import { info } from "./utils/logger";
 import httpLogger from "./utils/logger/httpLogger";
 
 const app = express();
 const PORT = config.port;
+
+app.set("trust proxy", true);
 
 app.use(httpLogger);
 
@@ -30,6 +35,23 @@ app.use(cookieParser());
 
 app.use(helmet());
 
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 100, // Limite chaque IP à 100 requêtes par fenêtre
+  standardHeaders: "draft-7", // Utilise les en-têtes standard RateLimit
+  legacyHeaders: false, // Désactive les en-têtes X-RateLimit
+  message: "Trop de requêtes, veuillez réessayer plus tard.",
+  keyGenerator: (req) => {
+    // x-forwarded-for peut etre un string ou un array
+    const forwarded = req.headers["x-forwarded-for"];
+    const forwardedIp = Array.isArray(forwarded) ? forwarded[0] : forwarded;
+    const ip =
+      req.ip || forwardedIp || req.socket.remoteAddress || "unknown-ip";
+    return ip;
+  },
+  skip: (req, res) => req.method === "OPTIONS",
+});
+app.use(limiter);
 app.use(csrfTokenMiddleware);
 
 app.use((req, res, next) => {
@@ -38,15 +60,6 @@ app.use((req, res, next) => {
   }
   next();
 });
-
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  limit: 100, // Limite chaque IP à 100 requêtes par fenêtre
-  standardHeaders: "draft-7", // Utilise les en-têtes standard RateLimit
-  legacyHeaders: false, // Désactive les en-têtes X-RateLimit
-  message: "Trop de requêtes, veuillez réessayer plus tard.",
-});
-app.use(limiter);
 
 registerRoutes(app);
 

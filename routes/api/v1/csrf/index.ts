@@ -1,6 +1,9 @@
 import type { Request, Response } from "express";
 import express from "express";
-import { getCsrfToken, csrfProtectionMiddleware } from "../../../../middleware/csrf";
+import {
+  getCsrfToken,
+  csrfProtectionMiddleware,
+} from "../../../../middleware/csrf";
 import { sendError, sendSuccess } from "../../../../utils/responseHandler";
 
 const router = express.Router();
@@ -52,10 +55,14 @@ router.get("/token", getCsrfToken);
  *       403:
  *         description: Validation CSRF échouée
  */
-router.post("/test", csrfProtectionMiddleware, (req: Request, res: Response) => {
-  return sendSuccess(res, "Test CSRF réussi", {
-    message: "La protection CSRF fonctionne correctement",
-  });
-});
+router.post(
+  "/test",
+  csrfProtectionMiddleware,
+  (req: Request, res: Response) => {
+    return sendSuccess(res, "Test CSRF réussi", {
+      message: "La protection CSRF fonctionne correctement",
+    });
+  }
+);
 
 export default router;

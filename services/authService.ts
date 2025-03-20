@@ -113,7 +113,7 @@ export const authenticateUser = async (
   };
 
   const token = await generateJWT(payload);
-  
+
   setJWTCookie(res, token);
 
   return { user };

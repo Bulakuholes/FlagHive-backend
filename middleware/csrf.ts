@@ -21,11 +21,11 @@ export const csrfTokenMiddleware = (
   next: NextFunction
 ) => {
   req.csrfToken = () => csrfUtils.generateToken(req, res);
-  
+
   if (req.method === "GET") {
     csrfUtils.generateToken(req, res);
   }
-  
+
   next();
 };
 

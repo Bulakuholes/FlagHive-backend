@@ -24,15 +24,15 @@ export const authenticateJWT = async (
   next: NextFunction
 ) => {
   const token = req.cookies[jwtCookieConfig.name];
-  
+
   // Si j'ai pas de token dans le cookie, vérifier l'en-tête Authorization
   const authHeader = req.headers.authorization;
   let authToken: string | undefined;
-  
+
   if (authHeader && authHeader.startsWith("Bearer ")) {
     authToken = authHeader.split(" ")[1];
   }
-  
+
   // cookie ou header
   const jwtToken = token || authToken;
 
