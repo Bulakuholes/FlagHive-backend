@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import express from "express";
+import { getCsrfToken, csrfProtectionMiddleware } from "../../../../middleware/csrf";
 import { sendError, sendSuccess } from "../../../../utils/responseHandler";
 
 const router = express.Router();
@@ -30,20 +31,30 @@ const router = express.Router();
  *       500:
  *         description: Erreur lors de la génération du token CSRF
  */
-router.get("/token", (req: Request, res: Response) => {
-  const csrfToken = req.csrfToken?.();
+router.get("/token", getCsrfToken);
 
-  if (!csrfToken) {
-    return sendError(
-      res,
-      "Erreur lors de la génération du token CSRF",
-      500,
-      "CSRF_TOKEN_ERROR"
-    );
-  }
-
-  return sendSuccess(res, "Token CSRF généré avec succès", {
-    csrfToken,
+/**
+ * @swagger
+ * /v1/csrf/test:
+ *   post:
+ *     summary: Tester la protection CSRF
+ *     description: Route de test pour vérifier que la protection CSRF fonctionne
+ *     tags: [CSRF]
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Test CSRF réussi
+ *       403:
+ *         description: Validation CSRF échouée
+ */
+router.post("/test", csrfProtectionMiddleware, (req: Request, res: Response) => {
+  return sendSuccess(res, "Test CSRF réussi", {
+    message: "La protection CSRF fonctionne correctement",
   });
 });
 

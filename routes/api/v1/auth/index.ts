@@ -1,4 +1,5 @@
 import { UserRole } from "@prisma/client";
+import crypto from "crypto";
 import type { Request, Response } from "express";
 import express from "express";
 import {
@@ -6,7 +7,10 @@ import {
   requireRole,
 } from "../../../../middlewares/authMiddleware";
 import { validate } from "../../../../middlewares/validationMiddleware";
-import { authenticateUser } from "../../../../services/authService";
+import {
+  authenticateUser,
+  clearJWTCookie,
+} from "../../../../services/authService";
 import {
   createUser,
   findUserByEmail,
@@ -83,6 +87,9 @@ const router = express.Router();
  *                           type: string
  *                         role:
  *                           type: string
+ *                         gravatarHash:
+ *                           type: string
+ *                           description: Hash SHA-256 de l'email pour Gravatar
  *                 meta:
  *                   type: object
  *                   properties:
@@ -126,10 +133,15 @@ router.post(
       // Suppression du mot de passe hashé de la réponse
       const { hashedPassword, ...userWithoutPassword } = user;
 
+      const userWithGravatar = {
+        ...userWithoutPassword,
+        gravatarHash: getGravatarHash(email),
+      };
+
       return sendSuccess(
         res,
         "Utilisateur créé avec succès",
-        { user: userWithoutPassword },
+        { user: userWithGravatar },
         201
       );
     } catch (error) {
@@ -152,7 +164,7 @@ router.post(
  * /api/v1/auth/login:
  *   post:
  *     summary: Connexion d'un utilisateur
- *     description: Authentifie un utilisateur et renvoie un token JWT
+ *     description: Authentifie un utilisateur et définit un cookie JWT
  *     tags: [Authentification]
  *     requestBody:
  *       required: true
@@ -202,9 +214,9 @@ router.post(
  *                           type: string
  *                         role:
  *                           type: string
- *                     token:
- *                       type: string
- *                       description: Token JWT pour l'authentification
+ *                         gravatarHash:
+ *                           type: string
+ *                           description: Hash SHA-256 de l'email pour Gravatar
  *                 meta:
  *                   type: object
  *                   properties:
@@ -227,7 +239,7 @@ router.post(
 
     try {
       // Authentification de l'utilisateur
-      const result = await authenticateUser(username, password);
+      const result = await authenticateUser(username, password, res);
 
       if (!result) {
         return sendError(
@@ -238,9 +250,14 @@ router.post(
         );
       }
 
-      const { user, token } = result;
+      const { user } = result;
 
-      return sendSuccess(res, "Connexion réussie", { user, token });
+      const userWithGravatar = {
+        ...user,
+        gravatarHash: getGravatarHash(user.email),
+      };
+
+      return sendSuccess(res, "Connexion réussie", { user: userWithGravatar });
     } catch (error) {
       logError(
         error instanceof Error ? error : new Error(String(error)),
@@ -255,6 +272,40 @@ router.post(
     }
   }
 );
+
+/**
+ * @swagger
+ * /api/v1/auth/logout:
+ *   post:
+ *     summary: Déconnexion de l'utilisateur
+ *     description: Supprime le cookie JWT
+ *     tags: [Authentification]
+ *     responses:
+ *       200:
+ *         description: Déconnexion réussie
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Déconnexion réussie
+ *                 meta:
+ *                   type: object
+ *                   properties:
+ *                     timestamp:
+ *                       type: string
+ *                       format: date-time
+ */
+router.post("/logout", (req: Request, res: Response) => {
+  // Supprimer le cookie JWT
+  clearJWTCookie(res);
+  return sendSuccess(res, "Déconnexion réussie");
+});
 
 /**
  * @swagger
@@ -294,6 +345,8 @@ router.post(
  *                           type: string
  *                         role:
  *                           type: string
+ *                         gravatarHash:
+ *                           type: string
  *                 meta:
  *                   type: object
  *                   properties:
@@ -303,9 +356,18 @@ router.post(
  *       401:
  *         description: Non authentifié
  */
+/**
+ * Génère un hash SHA-256 pour Gravatar
+ */
+const getGravatarHash = (email: string): string => {
+  return crypto
+    .createHash("sha256")
+    .update(email.trim().toLowerCase())
+    .digest("hex");
+};
+
 router.get("/me", authenticateJWT, async (req: Request, res: Response) => {
   try {
-    // L'utilisateur est déjà récupéré par le middleware authenticateJWT
     const user = req.user;
 
     if (!user) {
@@ -317,7 +379,14 @@ router.get("/me", authenticateJWT, async (req: Request, res: Response) => {
       );
     }
 
-    return sendSuccess(res, "Profil récupéré avec succès", { user });
+    const userWithGravatar = {
+      ...user,
+      gravatarHash: getGravatarHash(user.email),
+    };
+
+    return sendSuccess(res, "Profil récupéré avec succès", {
+      user: userWithGravatar,
+    });
   } catch (error) {
     logError(
       error instanceof Error ? error : new Error(String(error)),
